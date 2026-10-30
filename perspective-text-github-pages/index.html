@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>표지판 원근 글씨 합성기</title>
+<style>
+:root{color-scheme:dark;--bg:#111318;--panel:#1b1e26;--line:#343946;--muted:#aab1c0;--accent:#9bb8ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f4f5f8;font:14px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
+header{padding:19px 23px;border-bottom:1px solid var(--line)}h1{font-size:20px;margin:0 0 4px}header p{margin:0;color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;padding:18px;max-width:1500px;margin:auto}
+.preview{background:#0b0c10;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:400px}
+canvas{display:block;width:min(100%,900px);height:auto;touch-action:none}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;height:max-content}
+section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--line)}section:last-child{border:0;margin:0;padding:0}
+h2{font-size:14px;margin:0 0 10px}label{display:block;color:#dce0e9;margin:9px 0 5px}
+input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#11141b;border:1px solid #3a4050;border-radius:8px;padding:9px}
+textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#11141b;border:1px solid #3a4050;border-radius:8px;padding:3px}
+input[type=range]{width:100%;accent-color:var(--accent)}input[type=file]{width:100%;font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+button{border:0;border-radius:9px;padding:11px 14px;background:#dce6ff;color:#151a26;font-weight:700;cursor:pointer;width:100%}
+button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
+.point-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.point{background:#141720;border:1px solid #303645;border-radius:8px;padding:8px}.point b{display:block;font-size:12px;margin-bottom:5px}
+.point input{padding:6px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.status{font-size:12px;color:#b9d5ff;margin-top:8px}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.preview{min-height:0}}
+</style></head>
+<body>
+<header><h1>표지판 원근 글씨 합성기</h1><p>표지판 모서리는 한 번 맞춰 저장하고, 이후에는 문장만 바꿔 PNG로 내려받으세요.</p></header>
+<main>
+<div class="preview"><canvas id="canvas" width="1080" height="1080"></canvas></div>
+<aside>
+<section><h2>1. 문장과 글씨</h2>
+<textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
+<label>글씨체</label><select id="font"><option value="Arial">Arial</option><option value="Noto Sans KR">Noto Sans KR</option><option value="serif">명조 / Serif</option><option value="sans-serif">고딕 / Sans-serif</option><option value="Georgia">Georgia</option><option value="Impact">Impact</option><option value="monospace">Monospace</option></select>
+<label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
+<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="220" value="125"></div><div><label>글자색</label><input id="color" type="color" value="#202020"></div></div>
+<label>정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select>
+<label>줄 간격</label><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15">
+<p class="hint">글씨는 표지판 전체를 억지로 채우지 않습니다. 문장이 짧으면 최대 크기를 유지하고, 길어지면 표지판 안에 들어오도록 자동으로 작아집니다.</p>
+</section>
+<section><h2>2. 표지판 영역 설정</h2>
+<p class="hint">파란 점을 표지판 네 모서리에 맞추세요. 설정은 이 브라우저에 자동 저장되어 다음 접속에도 유지됩니다.</p>
+<div class="point-list" id="points"></div>
+<button class="secondary" id="reset">기본 위치로 초기화</button>
+<div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
+</section>
+<section><h2>3. 저장</h2><div class="actions"><button id="download">PNG 다운로드</button><button class="secondary" id="toggle">조절점 숨기기</button></div>
+<p class="hint">다운로드는 원본 크기 1080 × 1080 PNG입니다. 조절점은 저장 이미지에 포함되지 않습니다.</p></section>
+</aside></main>
+<script>
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=1080,H=1080;
+const base=new Image();base.src='assets/sign-base.png';
+const initial=[{x:112,y:292},{x:815,y:37},{x:1012,y:518},{x:333,y:780}];
+const STORE='perspective-sign-corners-v2';
+let pts;try{const v=JSON.parse(localStorage.getItem(STORE));pts=Array.isArray(v)&&v.length===4?v:initial.map(p=>({...p}))}catch{pts=initial.map(p=>({...p}))}
+let showPoints=true,drag=-1,uploadedFontName='';
+const $=id=>document.getElementById(id),names=['왼쪽 위','오른쪽 위','오른쪽 아래','왼쪽 아래'];
+const pointBox=$('points');
+initial.forEach((p,i)=>{const el=document.createElement('div');el.className='point';el.innerHTML=`<b>${names[i]}</b><div class="grid"><input type="number" min="0" max="1080" aria-label="x"><input type="number" min="0" max="1080" aria-label="y"></div>`;pointBox.appendChild(el);const ins=el.querySelectorAll('input');ins[0].addEventListener('input',()=>{pts[i].x=clamp(+ins[0].value,0,W);savePoints();draw()});ins[1].addEventListener('input',()=>{pts[i].y=clamp(+ins[1].value,0,H);savePoints();draw()})});
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function savePoints(){try{localStorage.setItem(STORE,JSON.stringify(pts));$('saved').textContent='● 모서리 설정 저장 완료'}catch{$('saved').textContent='저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.'}}
+function syncInputs(){[...pointBox.querySelectorAll('.point')].forEach((el,i)=>{let ins=el.querySelectorAll('input');ins[0].value=Math.round(pts[i].x);ins[1].value=Math.round(pts[i].y)})}
+function solve(A,b){A=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<8;i++){let m=i;for(let j=i+1;j<8;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];let d=A[i][i]||1e-12;for(let k=i;k<9;k++)A[i][k]/=d;for(let j=0;j<8;j++)if(j!==i){let f=A[j][i];for(let k=i;k<9;k++)A[j][k]-=f*A[i][k]}}return A.map(r=>r[8])}
+function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let{x,y}=src[i],{x:u,y:v}=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}return solve(A,b)}
+function project(h,x,y){let d=h[6]*x+h[7]*y+1;return{x:(h[0]*x+h[1]*y+h[2])/d,y:(h[3]*x+h[4]*y+h[5])/d}}
+function affine(s,d){let[p0,p1,p2]=s,[q0,q1,q2]=d,den=p0.x*(p1.y-p2.y)+p1.x*(p2.y-p0.y)+p2.x*(p0.y-p1.y);if(Math.abs(den)<1e-8)return null;let a=(q0.x*(p1.y-p2.y)+q1.x*(p2.y-p0.y)+q2.x*(p0.y-p1.y))/den,c=(q0.x*(p2.x-p1.x)+q1.x*(p0.x-p2.x)+q2.x*(p1.x-p0.x))/den,e=(q0.x*(p1.x*p2.y-p2.x*p1.y)+q1.x*(p2.x*p0.y-p0.x*p2.y)+q2.x*(p0.x*p1.y-p1.x*p0.y))/den,b=(q0.y*(p1.y-p2.y)+q1.y*(p2.y-p0.y)+q2.y*(p0.y-p1.y))/den,dv=(q0.y*(p2.x-p1.x)+q1.y*(p0.x-p2.x)+q2.y*(p1.x-p0.x))/den,f=(q0.y*(p1.x*p2.y-p2.x*p1.y)+q1.y*(p2.x*p0.y-p0.x*p2.y)+q2.y*(p0.x*p1.y-p1.x*p0.y))/den;return[a,b,c,dv,e,f]}
+function triangle(source,s,d){let m=affine(s,d);if(!m)return;ctx.save();ctx.beginPath();ctx.moveTo(d[0].x,d[0].y);ctx.lineTo(d[1].x,d[1].y);ctx.lineTo(d[2].x,d[2].y);ctx.closePath();ctx.clip();ctx.transform(...m);ctx.drawImage(source,0,0);ctx.restore()}
+function bilinear(u,v){let [a,b,c,d]=pts;return{x:(1-u)*(1-v)*a.x+u*(1-v)*b.x+u*v*c.x+(1-u)*v*d.x,y:(1-u)*(1-v)*a.y+u*(1-v)*b.y+u*v*c.y+(1-u)*v*d.y}}
+function makeText(){let lines=($('words').value||' ').split('\n'),font=$('font').value,leading=+$('leading').value,max=+$('fontSize').value;let m=document.createElement('canvas').getContext('2d');const measure=size=>{m.font=`700 ${size}px "${font}"`;return Math.max(1,...lines.map(t=>m.measureText(t||' ').width))};let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;let avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;let size=max;while(size>10&&(measure(size)>avgW*.78||lines.length*size*leading>avgH*.58))size-=1;
+let width=Math.ceil(measure(size)+size*.35),height=Math.ceil(lines.length*size*leading+size*.3),off=document.createElement('canvas');off.width=Math.max(1,width);off.height=Math.max(1,height);let o=off.getContext('2d');o.font=`700 ${size}px "${font}"`;o.fillStyle=$('color').value;o.textBaseline='middle';o.textAlign=$('align').value;let x=$('align').value==='left'?size*.18:$('align').value==='right'?width-size*.18:width/2;lines.forEach((line,i)=>o.fillText(line,x,size*.15+size*leading*(i+.5)));return off}
+function warpText(){let off=makeText();let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2,avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;
+let uW=Math.min(.84,off.width/avgW),vH=Math.min(.62,off.height/avgH);let u0=(1-uW)/2,v0=(1-vH)/2;let dst=[bilinear(u0,v0),bilinear(u0+uW,v0),bilinear(u0+uW,v0+vH),bilinear(u0,v0+vH)];let src=[{x:0,y:0},{x:off.width,y:0},{x:off.width,y:off.height},{x:0,y:off.height}],h=homography(src,dst),n=24;
+for(let j=0;j<n;j++)for(let i=0;i<n;i++){let x0=off.width*i/n,x1=off.width*(i+1)/n,y0=off.height*j/n,y1=off.height*(j+1)/n,s=[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}],d=s.map(p=>project(h,p.x,p.y));triangle(off,[s[0],s[1],s[2]],[d[0],d[1],d[2]]);triangle(off,[s[0],s[2],s[3]],[d[0],d[2],d[3]])}}
+function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.drawImage(base,0,0,W,H);warpText();if(showPoints){pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fillStyle='#4d79ff';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='white';ctx.stroke();ctx.fillStyle='white';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,p.x,p.y)})}syncInputs()}
+base.onload=draw;
+['words','font','fontSize','color','align','leading'].forEach(id=>$(id).addEventListener('input',draw));
+$('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
+function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEach((q,i)=>{let d=Math.hypot(q.x-p.x,q.y-p.y);if(d<best){best=d;drag=i}});if(drag>=0)canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
+$('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw()};
+$('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw()};
+$('download').onclick=()=>{let old=showPoints;showPoints=false;draw();let a=document.createElement('a');a.download='perspective-text.png';a.href=canvas.toDataURL('image/png');a.click();showPoints=old;draw()};
+if(base.complete&&base.naturalWidth)draw();
+</script></body></html>
