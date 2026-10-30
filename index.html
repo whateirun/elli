@@ -63,6 +63,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <button type="button" class="secondary" id="chooseFolder">내 PC에서 폴더 선택</button>
 <p class="hint" id="folderPath">선택된 폴더 없음</p>
 <button type="button" id="download" style="margin-top:10px">다운로드</button>
+<button type="button" class="secondary" id="saveAsFallback" style="display:none">다른 이름으로 저장</button>
 <button type="button" class="secondary" id="toggle">조절점 숨기기</button>
 <p class="hint" id="folderStatus">폴더를 선택한 뒤 다운로드를 누르면 해당 위치에 PNG 파일이 저장됩니다.</p>
 <p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p></section>
@@ -219,12 +220,15 @@ canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEa
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
 $('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw()};
 $('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw()};
+const supportsFolderSave=typeof window.showDirectoryPicker==='function';
+if(!supportsFolderSave){
+ $('chooseFolder').style.display='none';$('download').style.display='none';
+ $('folderPath').style.display='none';$('saveAsFallback').style.display='block';
+ $('folderStatus').textContent='이 브라우저에서는 PC 폴더 직접 지정이 지원되지 않아 브라우저의 다른 이름으로 저장 기능을 사용합니다.';
+}
 $('chooseFolder').onclick=async()=>{
  try{
-  if(!window.showDirectoryPicker){
-   $('folderStatus').textContent='이 브라우저는 폴더 직접 지정 기능을 지원하지 않습니다. 최신 Chrome 또는 Edge에서 GitHub Pages 주소(HTTPS)로 접속해 주세요.';
-   return;
-  }
+  if(!supportsFolderSave){return}
   selectedDirectory=await window.showDirectoryPicker({mode:'readwrite'});
   $('folderPath').textContent='선택된 폴더: '+selectedDirectory.name;
   $('folderStatus').textContent='폴더가 지정되었습니다. 다운로드 버튼을 누르면 이 폴더에 저장됩니다.';
@@ -232,6 +236,22 @@ $('chooseFolder').onclick=async()=>{
   if(e.name==='AbortError'){$('folderStatus').textContent='폴더 선택이 취소되었습니다.';return}
   $('folderStatus').textContent='폴더 지정 실패: '+e.message;
  }
+};
+$('saveAsFallback').onclick=async()=>{
+ const rawName=$('fileName').value.trim();
+ const safeName=rawName.replace(/[\\/:*?"<>|]/g,'_').replace(/\.png$/i,'');
+ if(!safeName){$('folderStatus').textContent='먼저 파일명을 입력하세요.';return}
+ const old=showPoints;
+ try{
+  showPoints=false;draw();
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  showPoints=old;draw();
+  if(!blob)throw new Error('PNG 이미지 생성에 실패했습니다.');
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $('folderStatus').textContent='브라우저의 다운로드/저장 창을 통해 PNG를 저장하세요.';
+ }catch(e){showPoints=old;draw();$('folderStatus').textContent='저장 실패: '+e.message}
 };
 $('download').onclick=async()=>{
  const rawName=$('fileName').value.trim();
