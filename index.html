@@ -55,6 +55,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <section><h2 class="section-title">2. 저장<span class="help-tip" tabindex="0" role="button" aria-label="2. 저장 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">파일명을 정한 뒤 ‘다른 이름으로 저장’을 누르면 1080×1080 PNG로 저장합니다. 지원되는 브라우저에서는 저장 위치를 직접 고를 수 있고, 그렇지 않으면 기본 다운로드가 시작됩니다. 조절점과 UI는 이미지에 포함되지 않습니다. 실행 취소/다시 실행은 현재 탭에서 바꾼 편집 설정을 되돌리거나 다시 적용합니다.</span></span></h2>
 <label>파일명</label><input type="text" id="fileName" value="조이가 JoY" placeholder="파일명을 입력하세요">
 <button type="button" class="secondary" id="saveAsFallback">다른 이름으로 저장</button>
+<p class="hint" id="lastSavedStatus" aria-live="polite"></p>
 <div class="history-actions"><button type="button" class="secondary" id="undo" disabled>↶ 실행 취소</button><button type="button" class="secondary" id="redo" disabled>↷ 다시 실행</button></div>
 <button type="button" class="secondary" id="toggle">조절점 숨기기</button>
 <p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
@@ -417,12 +418,12 @@ $('saveAsFallback').onclick=async()=>{
   if(window.showSaveFilePicker){
    const handle=await window.showSaveFilePicker({suggestedName:safeName+'.png',types:[{description:'PNG 이미지',accept:{'image/png':['.png']}}]});
    const writable=await handle.createWritable();await writable.write(blob);await writable.close();
-   $('folderStatus').textContent='선택한 위치에 PNG 파일을 저장했습니다.';
+   $('folderStatus').textContent='선택한 위치에 PNG 파일을 저장했습니다.';$('lastSavedStatus').textContent=(handle.name||safeName+'.png')+' 저장됨';
   }else{
    const url=URL.createObjectURL(blob),a=document.createElement('a');
    a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(url),1000);
-   $('folderStatus').textContent='이 브라우저에서는 폴더 선택 저장을 지원하지 않아 기본 다운로드로 저장했습니다. 다운로드 설정에서 위치를 선택할 수 있습니다.';
+   $('folderStatus').textContent='이 브라우저에서는 폴더 선택 저장을 지원하지 않아 기본 다운로드로 저장했습니다. 다운로드 설정에서 위치를 선택할 수 있습니다.';$('lastSavedStatus').textContent=safeName+'.png 저장됨';
   }
  }catch(e){
   showPoints=old;draw();
