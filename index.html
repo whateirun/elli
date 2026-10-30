@@ -39,17 +39,17 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <main>
 <div class="preview"><canvas id="canvas" width="1080" height="1080"></canvas></div>
 <aside>
-<section><h2>1. 문장과 글씨</h2>
-<textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
+<section><h2>1. 문장</h2>
+<textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">JoY가 조이</textarea>
 </section>
-<section><h2>3. 저장</h2>
-<label>파일명</label><input type="text" id="fileName" value="perspective-text" placeholder="파일명을 입력하세요">
+<section><h2>2. 저장</h2>
+<label>파일명</label><input type="text" id="fileName" value="조이가 JoY" placeholder="파일명을 입력하세요">
 <button type="button" class="secondary" id="saveAsFallback">다른 이름으로 저장</button>
 <button type="button" class="secondary" id="toggle">조절점 숨기기</button>
 <p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
 <p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p>
 </section>
-<section><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1">Aiharakantei JP</option><option value="AddedFont2">Otsutome JP</option><option value="AddedFont3">Shokakiutage JP</option></select>
+<section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1">Aiharakantei JP</option><option value="AddedFont2">Otsutome JP</option><option value="AddedFont3">Shokakiutage JP</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
 <div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
@@ -68,11 +68,11 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <p class="hint">자간은 글자 사이 간격, 문단 간격은 줄바꿈 사이 추가 간격입니다. 세로·가로 비율은 모든 글자에 동일하게 적용됩니다. 조절값에 따라 표지판 안에 들어오도록 글자 크기도 자동 조정됩니다.</p>
 
 </section>
-<section><h2>표지판 배경 이미지</h2>
+<section><h2>4. 표지판 배경 이미지</h2>
 <label for="baseFile">배경 이미지 파일 추가</label><input type="file" id="baseFile" accept="image/*">
 <p class="hint">● 1x1 비율의 이미지를 사용할 것을 추천합니다.</p>
 </section>
-<section><h2>2. 표지판 영역 설정</h2>
+<section><h2>5. 표지판 영역 설정</h2>
 
 <div class="point-list" id="points"></div>
 <button class="secondary" id="reset">기본 위치로 초기화</button>
@@ -294,5 +294,6 @@ $('saveAsFallback').onclick=async()=>{
   else $('folderStatus').textContent='저장 실패: '+e.message;
  }
 };
+document.fonts.load('500 125px \"DobongOldRoad\"').then(()=>draw()).catch(()=>draw());
 if(base.complete&&base.naturalWidth)draw();
 </script></body></html>
