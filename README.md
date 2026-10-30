@@ -22,3 +22,11 @@
 
 ## 참고
 브라우저 저장 방식이므로 다른 PC·브라우저·시크릿 창에는 모서리 설정이 자동으로 동기화되지 않습니다.
+
+## 포함 글꼴
+- 도봉옛길체 (Medium)
+- 나눔명조 (Regular, Bold, ExtraBold)
+- Black Han Sans (Regular)
+- Noto Sans KR (Thin–Black, variable weight)
+
+글꼴 파일은 `assets/` 내부에 포함되어 있어 GitHub Pages에서 별도 외부 폰트 서버 없이 로드됩니다. 각 글꼴의 라이선스 파일은 `assets/fonts/`에 함께 포함되어 있습니다. 제공된 폰트 묶음에는 별도 Italic 파일이 없어 Italic 옵션은 제공하지 않습니다.
