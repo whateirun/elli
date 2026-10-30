@@ -34,7 +34,11 @@ button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
 <textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
 <label>글씨체</label><select id="font"><option value="Arial">Arial</option><option value="DobongOldRoad">도봉옛길체</option><option value="Noto Sans KR">Noto Sans KR</option><option value="serif">명조 / Serif</option><option value="sans-serif">고딕 / Sans-serif</option><option value="Georgia">Georgia</option><option value="Impact">Impact</option><option value="monospace">Monospace</option></select>
 <label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
-<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="220" value="125"></div><div><label>글자색</label><input id="color" type="color" value="#202020"></div></div>
+<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="220" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
+<label>선택한 글자 색상</label>
+<div class="grid"><input id="selectedColor" type="color" value="#d62828"><button type="button" id="applyColor">선택 글자에 적용</button></div>
+<button type="button" class="secondary" id="clearColor">선택 글자 색상 초기화</button>
+<p class="hint">위 문장 입력창에서 색을 바꿀 글자를 드래그해 선택한 다음 색상을 적용하세요. 여러 글자를 각각 선택해 다른 색을 지정할 수 있습니다.</p>
 <label>정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select>
 <label>줄 간격</label><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15">
 <div class="grid">
@@ -74,16 +78,30 @@ function syncInputs(){[...pointBox.querySelectorAll('.point')].forEach((el,i)=>{
 function solve(A,b){A=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<8;i++){let m=i;for(let j=i+1;j<8;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];let d=A[i][i]||1e-12;for(let k=i;k<9;k++)A[i][k]/=d;for(let j=0;j<8;j++)if(j!==i){let f=A[j][i];for(let k=i;k<9;k++)A[j][k]-=f*A[i][k]}}return A.map(r=>r[8])}
 function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let{x,y}=src[i],{x:u,y:v}=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}return solve(A,b)}
 function project(h,x,y){let d=h[6]*x+h[7]*y+1;return{x:(h[0]*x+h[1]*y+h[2])/d,y:(h[3]*x+h[4]*y+h[5])/d}}
-function affine(s,d){let[p0,p1,p2]=s,[q0,q1,q2]=d,den=p0.x*(p1.y-p2.y)+p1.x*(p2.y-p0.y)+p2.x*(p0.y-p1.y);if(Math.abs(den)<1e-8)return null;let a=(q0.x*(p1.y-p2.y)+q1.x*(p2.y-p0.y)+q2.x*(p0.y-p1.y))/den,c=(q0.x*(p2.x-p1.x)+q1.x*(p0.x-p2.x)+q2.x*(p1.x-p0.x))/den,e=(q0.x*(p1.x*p2.y-p2.x*p1.y)+q1.x*(p2.x*p0.y-p0.x*p2.y)+q2.x*(p0.x*p1.y-p1.x*p0.y))/den,b=(q0.y*(p1.y-p2.y)+q1.y*(p2.y-p0.y)+q2.y*(p0.y-p1.y))/den,dv=(q0.y*(p2.x-p1.x)+q1.y*(p0.x-p2.x)+q2.y*(p1.x-p0.x))/den,f=(q0.y*(p1.x*p2.y-p2.x*p1.y)+q1.y*(p2.x*p0.y-p0.x*p2.y)+q2.y*(p0.x*p1.y-p1.x*p0.y))/den;return[a,b,c,dv,e,f]}
-function triangle(source,s,d){
-let m=affine(s,d);if(!m)return;
-// Antialiased clipping on each mesh triangle can leave hairline gaps.
-// Expand only the clip edge slightly so adjacent triangles overlap.
-const cx=(d[0].x+d[1].x+d[2].x)/3,cy=(d[0].y+d[1].y+d[2].y)/3,overlap=1.15;
-const clipPts=d.map(p=>{let dx=p.x-cx,dy=p.y-cy,len=Math.hypot(dx,dy)||1;return{x:p.x+dx/len*overlap,y:p.y+dy/len*overlap}});
-ctx.save();ctx.beginPath();ctx.moveTo(clipPts[0].x,clipPts[0].y);ctx.lineTo(clipPts[1].x,clipPts[1].y);ctx.lineTo(clipPts[2].x,clipPts[2].y);ctx.closePath();ctx.clip();ctx.transform(...m);ctx.drawImage(source,0,0);ctx.restore()
-}
+
 function bilinear(u,v){let [a,b,c,d]=pts;return{x:(1-u)*(1-v)*a.x+u*(1-v)*b.x+u*v*c.x+(1-u)*v*d.x,y:(1-u)*(1-v)*a.y+u*(1-v)*b.y+u*v*c.y+(1-u)*v*d.y}}
+const colorOverrides=new Map();
+let selectedRange={start:0,end:0};
+const wordsInput=$('words');
+function rememberSelection(){
+ selectedRange={start:wordsInput.selectionStart??0,end:wordsInput.selectionEnd??0};
+}
+wordsInput.addEventListener('select',rememberSelection);
+wordsInput.addEventListener('keyup',rememberSelection);
+wordsInput.addEventListener('mouseup',rememberSelection);
+$('applyColor').onclick=()=>{
+ rememberSelection();
+ if(selectedRange.start===selectedRange.end){$('folderStatus').textContent='먼저 색을 바꿀 글자를 문장 입력창에서 선택하세요.';return}
+ const color=$('selectedColor').value;
+ for(let i=selectedRange.start;i<selectedRange.end;i++)colorOverrides.set(i,color);
+ draw();
+};
+$('clearColor').onclick=()=>{
+ rememberSelection();
+ if(selectedRange.start===selectedRange.end){$('folderStatus').textContent='먼저 색상을 초기화할 글자를 선택하세요.';return}
+ for(let i=selectedRange.start;i<selectedRange.end;i++)colorOverrides.delete(i);
+ draw();
+};
 function makeText(){
  const lines=($('words').value||' ').split('\n');
  const font=$('font').value,leading=+$('leading').value,max=+$('fontSize').value;
@@ -115,35 +133,77 @@ function makeText(){
  o.textBaseline='alphabetic';
  o.font=`700 ${size}px "${font}"`;
  const align=$('align').value;
+ let globalCharOffset=0;
  lines.forEach((line,lineIndex)=>{
   const chars=Array.from(line),lineWidth=met.widths[lineIndex];
   let cursor=align==='left'?padX:align==='right'?off.width-padX-lineWidth:(off.width-lineWidth)/2;
   const baseline=padY+size*.82*sy+lineIndex*met.lineStep;
   chars.forEach((ch,charIndex)=>{
    const rawWidth=o.measureText(ch).width;
+   o.fillStyle=colorOverrides.get(globalCharOffset) || $('color').value;
    o.save();o.translate(cursor,baseline);o.scale(sx,sy);o.fillText(ch,0,0);o.restore();
    cursor+=rawWidth*sx+(charIndex<chars.length-1?tracking:0);
+   globalCharOffset+=ch.length;
   });
+  globalCharOffset+=1;
  });
  return off;
 }
-function warpText(){
-let off=makeText();
-let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;
-let avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;
-// Fit the text within the sign, then project its four corners using the
-// perspective defined by the user's four control points.
-let uW=Math.min(.84,off.width/avgW),vH=Math.min(.62,off.height/avgH);
-let u0=(1-uW)/2,v0=(1-vH)/2;
-let dst=[bilinear(u0,v0),bilinear(u0+uW,v0),bilinear(u0+uW,v0+vH),bilinear(u0,v0+vH)];
-let src=[{x:0,y:0},{x:off.width,y:0},{x:off.width,y:off.height},{x:0,y:off.height}];
-let h=homography(src,dst),n=32;
-for(let j=0;j<n;j++)for(let i=0;i<n;i++){
- let x0=off.width*i/n,x1=off.width*(i+1)/n,y0=off.height*j/n,y1=off.height*(j+1)/n;
- let s=[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}],d=s.map(p=>project(h,p.x,p.y));
- triangle(off,[s[0],s[1],s[2]],[d[0],d[1],d[2]]);
- triangle(off,[s[0],s[2],s[3]],[d[0],d[2],d[3]]);
+function invertHomography(h){
+ const [a,b,c,d,e,f,g,k]=h;
+ const det=a*(e-f*k)-b*(d-f*g)+c*(d*k-e*g);
+ if(!Number.isFinite(det)||Math.abs(det)<1e-12)return null;
+ return [
+  (e-f*k)/det,(c*k-b)/det,(b*f-c*e)/det,
+  (f*g-d)/det,(a-c*g)/det,(c*d-a*f)/det,
+  (d*k-e*g)/det,(b*g-a*k)/det,(a*e-b*d)/det
+ ];
 }
+function warpText(){
+ const source=makeText();
+ const avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;
+ const avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;
+ const uW=Math.min(.84,source.width/avgW),vH=Math.min(.62,source.height/avgH);
+ const u0=(1-uW)/2,v0=(1-vH)/2;
+ const dst=[bilinear(u0,v0),bilinear(u0+uW,v0),bilinear(u0+uW,v0+vH),bilinear(u0,v0+vH)];
+ const src=[{x:0,y:0},{x:source.width,y:0},{x:source.width,y:source.height},{x:0,y:source.height}];
+ const inverse=invertHomography(homography(src,dst));
+ if(!inverse)return;
+ const [a,b,c,d,e,f,g,k,i]=inverse;
+ const minX=clamp(Math.floor(Math.min(...dst.map(p=>p.x))),0,W);
+ const maxX=clamp(Math.ceil(Math.max(...dst.map(p=>p.x))),0,W);
+ const minY=clamp(Math.floor(Math.min(...dst.map(p=>p.y))),0,H);
+ const maxY=clamp(Math.ceil(Math.max(...dst.map(p=>p.y))),0,H);
+ const sourcePixels=source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,source.width,source.height).data;
+ const warped=document.createElement('canvas');
+ warped.width=W;warped.height=H;
+ const warpedCtx=warped.getContext('2d');
+ const output=warpedCtx.createImageData(W,H),out=output.data;
+ const sw=source.width,sh=source.height;
+ for(let y=minY;y<maxY;y++){
+  for(let x=minX;x<maxX;x++){
+   const px=x+.5,py=y+.5,den=g*px+k*py+i;
+   if(Math.abs(den)<1e-12)continue;
+   const sx=(a*px+b*py+c)/den,sy=(d*px+e*py+f)/den;
+   if(sx<0||sy<0||sx>=sw||sy>=sh)continue;
+   const fx=clamp(sx-.5,0,sw-1),fy=clamp(sy-.5,0,sh-1);
+   const x0=clamp(Math.floor(fx),0,sw-1),y0=clamp(Math.floor(fy),0,sh-1);
+   const x1=Math.min(x0+1,sw-1),y1=Math.min(y0+1,sh-1);
+   const tx=clamp(fx-Math.floor(fx),0,1),ty=clamp(fy-Math.floor(fy),0,1);
+   const weights=[(1-tx)*(1-ty),tx*(1-ty),tx*ty,(1-tx)*ty];
+   const offsets=[(y0*sw+x0)*4,(y0*sw+x1)*4,(y1*sw+x1)*4,(y1*sw+x0)*4];
+   let alpha=0,red=0,green=0,blue=0;
+   for(let n=0;n<4;n++){
+    const q=offsets[n],w=weights[n],al=sourcePixels[q+3]/255;
+    alpha+=w*al;red+=w*al*sourcePixels[q];green+=w*al*sourcePixels[q+1];blue+=w*al*sourcePixels[q+2];
+   }
+   if(alpha<=0)continue;
+   const outIndex=(y*W+x)*4;
+   out[outIndex]=red/alpha;out[outIndex+1]=green/alpha;out[outIndex+2]=blue/alpha;out[outIndex+3]=alpha*255;
+  }
+ }
+ warpedCtx.putImageData(output,0,0);
+ ctx.drawImage(warped,0,0);
 }
 function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.drawImage(base,0,0,W,H);warpText();if(showPoints){pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,6.5,0,Math.PI*2);ctx.fillStyle='#4d79ff';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='white';ctx.stroke();ctx.fillStyle='white';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,p.x,p.y)})}syncInputs()}
 base.onload=draw;
@@ -185,5 +245,4 @@ $('download').onclick=async()=>{
  }
 };
 if(base.complete&&base.naturalWidth)draw();
-restoreDirectory();
 </script></body></html>
