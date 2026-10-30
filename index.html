@@ -59,8 +59,12 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 </section>
 <section><h2>3. 저장</h2>
 <label>파일명</label><input type="text" id="fileName" value="perspective-text" placeholder="파일명을 입력하세요">
-<div class="actions" style="margin-top:10px"><button id="download">다른 이름으로 저장</button><button class="secondary" id="toggle">조절점 숨기기</button></div>
-<p class="hint" id="folderStatus">파일명을 입력한 뒤 저장을 누르면 윈도우 저장 창에서 드라이브와 폴더를 선택할 수 있습니다.</p>
+<label for="chooseFolder">파일 위치 지정</label>
+<button type="button" class="secondary" id="chooseFolder">내 PC에서 폴더 선택</button>
+<p class="hint" id="folderPath">선택된 폴더 없음</p>
+<button type="button" id="download" style="margin-top:10px">다운로드</button>
+<button type="button" class="secondary" id="toggle">조절점 숨기기</button>
+<p class="hint" id="folderStatus">폴더를 선택한 뒤 다운로드를 누르면 해당 위치에 PNG 파일이 저장됩니다.</p>
 <p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p></section>
 </aside></main>
 <script>
@@ -69,7 +73,7 @@ const base=new Image();base.src='assets/sign-base.png';
 const initial=[{x:112,y:292},{x:815,y:37},{x:1012,y:518},{x:333,y:780}];
 const STORE='perspective-sign-corners-v2';
 let pts;try{const v=JSON.parse(localStorage.getItem(STORE));pts=Array.isArray(v)&&v.length===4?v:initial.map(p=>({...p}))}catch{pts=initial.map(p=>({...p}))}
-let showPoints=true,drag=-1,uploadedFontName='';
+let showPoints=true,drag=-1,uploadedFontName='',selectedDirectory=null;
 const $=id=>document.getElementById(id),names=['왼쪽 위','오른쪽 위','오른쪽 아래','왼쪽 아래'];
 const pointBox=$('points');
 initial.forEach((p,i)=>{const el=document.createElement('div');el.className='point';el.innerHTML=`<b>${names[i]}</b><div class="grid"><input type="number" min="0" max="1080" aria-label="x"><input type="number" min="0" max="1080" aria-label="y"></div>`;pointBox.appendChild(el);const ins=el.querySelectorAll('input');ins[0].addEventListener('input',()=>{pts[i].x=clamp(+ins[0].value,0,W);savePoints();draw()});ins[1].addEventListener('input',()=>{pts[i].y=clamp(+ins[1].value,0,H);savePoints();draw()})});
@@ -215,30 +219,35 @@ canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEa
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
 $('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw()};
 $('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw()};
+$('chooseFolder').onclick=async()=>{
+ try{
+  if(!window.showDirectoryPicker){
+   $('folderStatus').textContent='이 브라우저는 폴더 직접 지정 기능을 지원하지 않습니다. 최신 Chrome 또는 Edge에서 GitHub Pages 주소(HTTPS)로 접속해 주세요.';
+   return;
+  }
+  selectedDirectory=await window.showDirectoryPicker({mode:'readwrite'});
+  $('folderPath').textContent='선택된 폴더: '+selectedDirectory.name;
+  $('folderStatus').textContent='폴더가 지정되었습니다. 다운로드 버튼을 누르면 이 폴더에 저장됩니다.';
+ }catch(e){
+  if(e.name==='AbortError'){$('folderStatus').textContent='폴더 선택이 취소되었습니다.';return}
+  $('folderStatus').textContent='폴더 지정 실패: '+e.message;
+ }
+};
 $('download').onclick=async()=>{
  const rawName=$('fileName').value.trim();
  const safeName=rawName.replace(/[\\/:*?"<>|]/g,'_').replace(/\.png$/i,'');
  if(!safeName){$('folderStatus').textContent='먼저 파일명을 입력하세요.';return}
+ if(!selectedDirectory){$('folderStatus').textContent='먼저 파일 위치 지정에서 저장할 폴더를 선택하세요.';return}
  let old=showPoints;
  try{
   showPoints=false;draw();
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
   showPoints=old;draw();
   if(!blob)throw new Error('PNG 이미지 생성에 실패했습니다.');
-  if(window.showSaveFilePicker){
-   const handle=await window.showSaveFilePicker({
-    suggestedName:safeName+'.png',
-    types:[{description:'PNG 이미지',accept:{'image/png':['.png']}}]
-   });
-   const writable=await handle.createWritable();
-   await writable.write(blob);await writable.close();
-   $('folderStatus').textContent='저장 완료: '+handle.name;
-  }else{
-   const url=URL.createObjectURL(blob),a=document.createElement('a');
-   a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1000);
-   $('folderStatus').textContent='이 브라우저는 저장 위치 선택 기능을 지원하지 않아 기본 다운로드를 실행했습니다. 브라우저 다운로드 설정에서 위치를 선택해 주세요.';
-  }
+  const handle=await selectedDirectory.getFileHandle(safeName+'.png',{create:true});
+  const writable=await handle.createWritable();
+  await writable.write(blob);await writable.close();
+  $('folderStatus').textContent='저장 완료: '+selectedDirectory.name+' / '+safeName+'.png';
  }catch(e){
   showPoints=old;draw();
   if(e.name==='AbortError'){$('folderStatus').textContent='저장이 취소되었습니다.';return}
