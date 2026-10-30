@@ -5,28 +5,29 @@
 <title>표지판 원근 글씨 합성기</title>
 <style>
 @font-face{font-family:"DobongOldRoad";src:url("assets/dobong.ttf") format("truetype");font-weight:100 900;font-style:normal;font-display:swap}
-:root{color-scheme:dark;--bg:#111318;--panel:#1b1e26;--line:#343946;--muted:#aab1c0;--accent:#9bb8ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f4f5f8;font:14px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
-header{padding:19px 23px;border-bottom:1px solid var(--line)}h1{font-size:20px;margin:0 0 4px}header p{margin:0;color:var(--muted)}
+:root{color-scheme:light;--bg:#f1f4f1;--panel:#fffdf2;--line:#171717;--muted:#625f50;--accent:#c49a24;--text:#171717}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
+header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;background:var(--bg)}
+.site-logo{display:block;width:min(100%,1200px);height:auto;object-fit:contain}
 main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;padding:18px;max-width:1500px;margin:auto}
-.preview{background:#0b0c10;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:400px}
+.preview{background:#fffdf2;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:400px}
 canvas{display:block;width:min(100%,900px);height:auto;touch-action:none}
 aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;height:max-content}
 section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--line)}section:last-child{border:0;margin:0;padding:0}
-h2{font-size:14px;margin:0 0 10px}label{display:block;color:#dce0e9;margin:9px 0 5px}
-input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#11141b;border:1px solid #3a4050;border-radius:8px;padding:9px}
-textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#11141b;border:1px solid #3a4050;border-radius:8px;padding:3px}
-input[type=range]{width:100%;accent-color:var(--accent)}input[type=file]{width:100%;font-size:12px;color:var(--muted)}
+h2{font-size:14px;margin:0 0 10px}label{display:block;color:#29271f;margin:9px 0 5px}
+input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#fffef8;border:1px solid #171717;border-radius:8px;padding:9px}
+textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#fffef8;border:1px solid #171717;border-radius:8px;padding:3px}
+input[type=range]{width:100%;accent-color:var(--accent)}input[type=file]{width:100%;font-size:12px;color:#39362c}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
-button{border:0;border-radius:9px;padding:11px 14px;background:#dce6ff;color:#151a26;font-weight:700;cursor:pointer;width:100%}
-button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
-.point-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.point{background:#141720;border:1px solid #303645;border-radius:8px;padding:8px}.point b{display:block;font-size:12px;margin-bottom:5px}
+button{border:1px solid #171717;border-radius:9px;padding:11px 14px;background:#f1d77e;color:#171717;font-weight:700;cursor:pointer;width:100%}
+button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
+.point-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.point{background:#fff8dc;border:1px solid #171717;border-radius:8px;padding:8px}.point b{display:block;font-size:12px;margin-bottom:5px}
 .point input{padding:6px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.status{font-size:12px;color:#b9d5ff;margin-top:8px}
-@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.preview{min-height:0}}
+.status{font-size:12px;color:#66500d;margin-top:8px}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.preview{min-height:0}.site-logo{width:100%}}
 </style></head>
 <body>
-<header><h1>표지판 원근 글씨 합성기</h1><p>표지판 모서리는 한 번 맞춰 저장하고, 이후에는 문장만 바꿔 PNG로 내려받으세요.</p></header>
+<header><img class="site-logo" src="assets/site-logo.png" alt="사이트 로고"></header>
 <main>
 <div class="preview"><canvas id="canvas" width="1080" height="1080"></canvas></div>
 <aside>
@@ -34,7 +35,7 @@ button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
 <textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
 <label>글씨체</label><select id="font"><option value="Arial">Arial</option><option value="DobongOldRoad">도봉옛길체</option><option value="Noto Sans KR">Noto Sans KR</option><option value="serif">명조 / Serif</option><option value="sans-serif">고딕 / Sans-serif</option><option value="Georgia">Georgia</option><option value="Impact">Impact</option><option value="monospace">Monospace</option></select>
 <label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
-<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="220" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
+<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
 <label>선택한 글자 색상</label>
 <div class="grid"><input id="selectedColor" type="color" value="#d62828"><button type="button" id="applyColor">선택 글자에 적용</button></div>
 <button type="button" class="secondary" id="clearColor">선택 글자 색상 초기화</button>
@@ -123,8 +124,8 @@ function makeText(){
   return {width:Math.max(1,...widths),height:Math.max(size*sy,totalHeight),widths,lineStep};
  };
  let size=max,met=metrics(size);
- while(size>10&&(met.width>avgW*.78||met.height>avgH*.58)){size-=1;met=metrics(size)}
- const padX=Math.max(4,size*.2),padY=Math.max(4,size*.18);
+ while(size>10&&(met.width>avgW*.92||met.height>avgH*.84)){size-=1;met=metrics(size)}
+ const padX=Math.max(4,size*.08),padY=Math.max(4,size*.08);
  const off=document.createElement('canvas');
  off.width=Math.max(1,Math.ceil(met.width+padX*2));
  off.height=Math.max(1,Math.ceil(met.height+padY*2));
@@ -163,7 +164,7 @@ function warpText(){
  const source=makeText();
  const avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;
  const avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;
- const uW=Math.min(.84,source.width/avgW),vH=Math.min(.62,source.height/avgH);
+ const uW=Math.min(.96,source.width/avgW),vH=Math.min(.90,source.height/avgH);
  const u0=(1-uW)/2,v0=(1-vH)/2;
  const dst=[bilinear(u0,v0),bilinear(u0+uW,v0),bilinear(u0+uW,v0+vH),bilinear(u0,v0+vH)];
  const src=[{x:0,y:0},{x:source.width,y:0},{x:source.width,y:source.height},{x:0,y:source.height}];
