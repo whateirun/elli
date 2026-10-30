@@ -25,7 +25,7 @@ section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--lin
 h2{font-size:14px;margin:0 0 10px}label{display:block;color:#29271f;margin:9px 0 5px}
 input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:9px}
 textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:3px}
-input[type=range]{width:100%;accent-color:var(--accent);min-width:0}.range-control{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:8px;align-items:center}.range-control input[type=number]{padding:6px 5px;text-align:center;min-width:0}.range-hint{grid-column:1/-1;color:var(--muted);font-size:11px;margin-top:-5px}input[type=file]{width:100%;font-size:12px;color:#39362c}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}.range-control{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:8px;align-items:center}.range-control input[type=number]{padding:6px 5px;text-align:center;min-width:0}.range-hint{color:var(--muted);font-size:11px;margin:2px 0 0}input[type=file]{width:100%;font-size:12px;color:#39362c}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
 button{border:1px solid #ebcf70;border-radius:9px;padding:11px 14px;background:#ffed8b;color:#171717;font-weight:700;cursor:pointer;width:100%}
 button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
@@ -53,7 +53,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1" style="font-family:AddedFont1,sans-serif">あいはらかんてい</option><option value="AddedFont2" style="font-family:AddedFont2,sans-serif">おつとめ</option><option value="AddedFont3" style="font-family:AddedFont3,sans-serif">しょかきうたげ</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가</label><p class="hint">(.ttf / .otf / .woff / .woff2)</p><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
-<div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="180"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
+<div class="grid"><div><label for="fontSize">최대 글자 크기</label><div class="range-control"><input id="fontSize" type="range" min="24" max="600" value="170"><input id="fontSizeNumber" type="number" min="24" max="600" step="1" value="170" aria-label="최대 글자 크기 숫자 입력"></div><p class="range-hint">24~600</p></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
 <label>선택한 글자 색상</label>
 <div class="grid"><input id="selectedColor" type="color" value="#d62828"><button type="button" id="applyColor">선택 글자에 적용</button></div>
 <button type="button" class="secondary" id="clearColor">선택 글자 색상 초기화</button>
@@ -144,7 +144,7 @@ updateFontWeights();
 function pairRange(rangeId,numberId){
  const range=$(rangeId),number=$(numberId);
  const syncFromRange=()=>{number.value=range.value};
- const syncFromNumber=()=>{let value=Number(number.value);if(number.value===''||!Number.isFinite(value))return;value=clamp(value,Number(range.min),Number(range.max));if(range.step!=='any'){const step=Number(range.step);value=Number(range.min)+Math.round((value-Number(range.min))/step)*step;value=clamp(value,Number(range.min),Number(range.max))}range.value=String(value);number.value=String(value);draw()};
+ const syncFromNumber=()=>{if(number.value==='')return;let value=Number(number.value);if(!Number.isFinite(value))return;value=clamp(value,Number(range.min),Number(range.max));if(range.step!=='any'){const step=Number(range.step);value=Number(range.min)+Math.round((value-Number(range.min))/step)*step;value=clamp(value,Number(range.min),Number(range.max))}range.value=String(value);number.value=String(value);draw()};
  range.addEventListener('input',syncFromRange);number.addEventListener('input',syncFromNumber);number.addEventListener('change',()=>{if(number.value==='')number.value=range.value;syncFromNumber()});
 }
 pairRange('fontSize','fontSizeNumber');pairRange('leading','leadingNumber');
@@ -264,7 +264,7 @@ function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.d
 base.onload=draw;
 ['words','font','fontSize','color','align','leading','tracking','paragraphSpacing','verticalScale','horizontalScale'].forEach(id=>$(id).addEventListener('input',draw));
 $('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
-const cropOverlay=$('cropOverlay'),cropCanvas=$('cropCanvas'),cropCtx=cropCanvas.getContext('2d'),cropStage=$('cropStage'),cropZoom=$('cropZoom');
+const cropOverlay=$('cropOverlay'),cropCanvas=$('cropCanvas'),cropCtx=cropCanvas.getContext('2d'),cropZoom=$('cropZoom');
 let cropImage=null,cropURL=null,cropScale=1,cropOffsetX=0,cropOffsetY=0,cropDrag=null;
 function cropGeometry(){
  if(!cropImage)return null;
@@ -278,7 +278,7 @@ $('baseFile').addEventListener('change',e=>{
  const file=e.target.files&&e.target.files[0];if(!file)return;
  if(!file.type.startsWith('image/')){$('folderStatus').textContent='이미지 파일을 선택해 주세요.';e.target.value='';return}
  const url=URL.createObjectURL(file),img=new Image();
- img.onload=()=>{if(cropURL)URL.revokeObjectURL(cropURL);cropURL=url;cropImage=img;cropScale=1;cropOffsetX=(420-Math.max(420,420*img.naturalWidth/img.naturalHeight))/2;cropOffsetY=(420-Math.max(420,420*img.naturalHeight/img.naturalWidth))/2;cropZoom.value='1';cropOverlay.classList.add('open');drawCrop()};
+ img.onload=()=>{if(cropURL)URL.revokeObjectURL(cropURL);cropURL=url;cropImage=img;cropScale=1;const fit=Math.max(420/img.naturalWidth,420/img.naturalHeight);cropOffsetX=(420-img.naturalWidth*fit)/2;cropOffsetY=(420-img.naturalHeight*fit)/2;cropZoom.value='1';cropOverlay.classList.add('open');drawCrop()};
  img.onerror=()=>{URL.revokeObjectURL(url);$('folderStatus').textContent='이미지를 불러오지 못했습니다.';e.target.value=''};img.src=url;
 });
 cropZoom.addEventListener('input',()=>{const old=cropScale;cropScale=Number(cropZoom.value);const ratio=cropScale/old;cropOffsetX=210-(210-cropOffsetX)*ratio;cropOffsetY=210-(210-cropOffsetY)*ratio;drawCrop()});
