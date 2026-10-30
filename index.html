@@ -10,6 +10,9 @@
 @font-face{font-family:"NanumMyeongjo";src:url("assets/fonts/NanumMyeongjo-ExtraBold.ttf") format("truetype");font-weight:800;font-style:normal;font-display:swap}
 @font-face{font-family:"BlackHanSans";src:url("assets/fonts/BlackHanSans-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"NotoSansKR";src:url("assets/fonts/NotoSansKR-Variable.ttf") format("truetype");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"AddedFont1";src:url("assets/fonts/added/font-1.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"AddedFont2";src:url("assets/fonts/added/font-2.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"AddedFont3";src:url("assets/fonts/added/font-3.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
 :root{color-scheme:light;--bg:#f1f4f1;--panel:#fffdf2;--line:#ebcf70;--muted:#625f50;--accent:#c49a24;--text:#171717}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
 header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;background:var(--bg)}
@@ -38,9 +41,9 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <aside>
 <section><h2>1. 문장과 글씨</h2>
 <textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
-<label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">Black Han Sans</option><option value="NotoSansKR">Noto Sans KR</option></select>
+<label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">Black Han Sans</option><option value="NotoSansKR">Noto Sans KR</option><option value="AddedFont1">Aiharakantei_200</option><option value="AddedFont2">Otsutome_font_ver3_20</option><option value="AddedFont3">しょかきうたげ_無料版_</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
-<p class="hint">굵기 선택은 해당 글꼴에 실제 포함된 굵기만 표시합니다. 제공된 폰트 파일에는 별도 Italic 글꼴이 없어 기울임 설정은 추가하지 않았습니다.</p>\n<label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
+<label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
 <div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
 <label>선택한 글자 색상</label>
 <div class="grid"><input id="selectedColor" type="color" value="#d62828"><button type="button" id="applyColor">선택 글자에 적용</button></div>
@@ -55,10 +58,14 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
  <div><label for="horizontalScale">가로 비율 (%)</label><input id="horizontalScale" type="number" min="25" max="250" step="1" value="100"></div>
 </div>
 <p class="hint">자간은 글자 사이 간격, 문단 간격은 줄바꿈 사이 추가 간격입니다. 세로·가로 비율은 모든 글자에 동일하게 적용됩니다. 조절값에 따라 표지판 안에 들어오도록 글자 크기도 자동 조정됩니다.</p>
-<p class="hint">글씨는 표지판 전체를 억지로 채우지 않습니다. 문장이 짧으면 최대 크기를 유지하고, 길어지면 표지판 안에 들어오도록 자동으로 작아집니다.</p>
+
+</section>
+<section><h2>표지판 배경 이미지</h2>
+<label for="baseFile">배경 이미지 파일 추가</label><input type="file" id="baseFile" accept="image/*">
+<p class="hint">● 1x1 비율의 이미지를 사용할 것을 추천합니다.</p>
 </section>
 <section><h2>2. 표지판 영역 설정</h2>
-<p class="hint">파란 점을 표지판 네 모서리에 맞추세요. 설정은 이 브라우저에 자동 저장되어 다음 접속에도 유지됩니다.</p>
+
 <div class="point-list" id="points"></div>
 <button class="secondary" id="reset">기본 위치로 초기화</button>
 <div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
@@ -72,7 +79,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 </aside></main>
 <script>
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=1080,H=1080;
-const base=new Image();base.src='assets/sign-base.png';
+let base=new Image();base.src='assets/sign-base.png';
 const initial=[{x:112,y:292},{x:815,y:37},{x:1012,y:518},{x:333,y:780}];
 const STORE='perspective-sign-corners-v2';
 let pts;try{const v=JSON.parse(localStorage.getItem(STORE));pts=Array.isArray(v)&&v.length===4?v:initial.map(p=>({...p}))}catch{pts=initial.map(p=>({...p}))}
@@ -115,6 +122,9 @@ const fontWeightOptions={
  DobongOldRoad:[['500','Medium']],
  NanumMyeongjo:[['400','Regular'],['700','Bold'],['800','ExtraBold']],
  BlackHanSans:[['400','Regular']],
+ AddedFont1:[["400","Regular"]],
+ AddedFont2:[["400","Regular"]],
+ AddedFont3:[["400","Regular"]],
  NotoSansKR:[['100','Thin'],['200','ExtraLight'],['300','Light'],['400','Regular'],['500','Medium'],['600','SemiBold'],['700','Bold'],['800','ExtraBold'],['900','Black']]
 };
 function updateFontWeights(){
@@ -243,6 +253,14 @@ function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.d
 base.onload=draw;
 ['words','font','fontSize','color','align','leading','tracking','paragraphSpacing','verticalScale','horizontalScale'].forEach(id=>$(id).addEventListener('input',draw));
 $('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
+$('baseFile').addEventListener('change',e=>{
+ const file=e.target.files&&e.target.files[0]; if(!file)return;
+ if(!file.type.startsWith('image/')){$('folderStatus').textContent='이미지 파일을 선택해 주세요.';return}
+ const next=new Image(),url=URL.createObjectURL(file);
+ next.onload=()=>{const old=base;base=next;draw();if(old.src&&old.src.startsWith('blob:'))URL.revokeObjectURL(old.src);$('folderStatus').textContent='배경 이미지가 적용되었습니다. 미리보기와 저장 파일은 1080 × 1080입니다.'};
+ next.onerror=()=>{$('folderStatus').textContent='이미지를 불러오지 못했습니다.';URL.revokeObjectURL(url)};
+ next.src=url;
+});
 function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEach((q,i)=>{let d=Math.hypot(q.x-p.x,q.y-p.y);if(d<best){best=d;drag=i}});if(drag>=0)canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
@@ -258,11 +276,21 @@ $('saveAsFallback').onclick=async()=>{
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
   showPoints=old;draw();
   if(!blob)throw new Error('PNG 이미지 생성에 실패했습니다.');
-  const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  $('folderStatus').textContent='브라우저의 파일 저장 기능을 통해 PNG를 저장하세요.';
- }catch(e){showPoints=old;draw();$('folderStatus').textContent='저장 실패: '+e.message}
+  if(window.showSaveFilePicker){
+   const handle=await window.showSaveFilePicker({suggestedName:safeName+'.png',types:[{description:'PNG 이미지',accept:{'image/png':['.png']}}]});
+   const writable=await handle.createWritable();await writable.write(blob);await writable.close();
+   $('folderStatus').textContent='선택한 위치에 PNG 파일을 저장했습니다.';
+  }else{
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   $('folderStatus').textContent='이 브라우저에서는 폴더 선택 저장을 지원하지 않아 기본 다운로드로 저장했습니다. 다운로드 설정에서 위치를 선택할 수 있습니다.';
+  }
+ }catch(e){
+  showPoints=old;draw();
+  if(e.name==='AbortError')$('folderStatus').textContent='저장이 취소되었습니다.';
+  else $('folderStatus').textContent='저장 실패: '+e.message;
+ }
 };
 if(base.complete&&base.naturalWidth)draw();
 </script></body></html>
