@@ -32,6 +32,15 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 .point-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.point{background:#fff8dc;border:1px solid #ebcf70;border-radius:8px;padding:8px}.point b{display:block;font-size:12px;margin-bottom:5px}
 .point input{padding:6px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .status{font-size:12px;color:#66500d;margin-top:8px}
+.history-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.history-actions button{margin:0}
+button:disabled{opacity:.45;cursor:not-allowed}
+.section-title{display:flex;align-items:center;gap:7px}
+.help-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:19px;height:19px;border:1px solid #a88a31;border-radius:50%;background:#fff8dc;color:#5d4a12;font-size:12px;font-weight:800;cursor:help;touch-action:manipulation}
+.help-tip .help-bubble{position:absolute;z-index:100;left:0;top:calc(100% + 8px);width:min(280px,75vw);padding:11px 12px;border:1px solid #d8bd60;border-radius:9px;background:#fffef8;color:#29271f;box-shadow:0 8px 24px #0002;font-size:12px;font-weight:400;line-height:1.6;text-align:left;white-space:normal;display:none;pointer-events:none}
+.help-tip:hover .help-bubble,.help-tip:focus-visible .help-bubble,.help-tip.is-held .help-bubble{display:block}
+.help-tip .help-bubble::before{content:"";position:absolute;left:5px;top:-6px;width:10px;height:10px;background:#fffef8;border-left:1px solid #d8bd60;border-top:1px solid #d8bd60;transform:rotate(45deg)}
+@media(hover:none){.help-tip:hover .help-bubble{display:none}.help-tip.is-held .help-bubble{display:block}}
 @media(max-width:850px){main{grid-template-columns:1fr;padding:36px 10px 10px}.preview{min-height:0;position:static;align-self:auto}.site-logo{width:100%}}
 .crop-overlay{position:fixed;inset:0;background:#17171799;display:none;align-items:center;justify-content:center;padding:16px;z-index:1000}.crop-overlay.open{display:flex}.crop-dialog{width:min(100%,520px);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 18px 55px #0004}.crop-dialog h2{margin:0 0 6px}.crop-stage{width:min(100%,420px);aspect-ratio:1;margin:14px auto;background:#f1f4f1;border:1px solid var(--line);border-radius:8px;overflow:hidden;touch-action:none}.crop-stage canvas{width:100%;height:100%;touch-action:none}.crop-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.crop-actions button{margin:0}.crop-dialog .hint{margin-top:8px}
 </style></head>
@@ -40,17 +49,18 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <main>
 <div class="preview"><canvas id="canvas" width="1080" height="1080"></canvas></div>
 <aside>
-<section><h2>1. 문장</h2>
+<section><h2 class="section-title">1. 문장<span class="help-tip" tabindex="0" role="button" aria-label="1. 문장 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">표지판에 넣을 문장을 입력합니다. 줄바꿈도 그대로 반영됩니다. 글자 색을 따로 바꾸려면 문장 입력창에서 글자를 드래그해 선택한 뒤, 아래 글씨 설정의 ‘선택한 글자 색상’과 ‘선택 글자에 적용’을 사용하세요. 선택 글자 색상 초기화는 선택 범위의 색을 기본 글자 색상으로 되돌립니다.</span></span></h2>
 <textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">JoY가 조이</textarea>
 </section>
-<section><h2>2. 저장</h2>
+<section><h2 class="section-title">2. 저장<span class="help-tip" tabindex="0" role="button" aria-label="2. 저장 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">파일명을 정한 뒤 ‘다른 이름으로 저장’을 누르면 1080×1080 PNG로 저장합니다. 지원되는 브라우저에서는 저장 위치를 직접 고를 수 있고, 그렇지 않으면 기본 다운로드가 시작됩니다. 조절점과 UI는 이미지에 포함되지 않습니다. 실행 취소/다시 실행은 현재 탭에서 바꾼 편집 설정을 되돌리거나 다시 적용합니다.</span></span></h2>
 <label>파일명</label><input type="text" id="fileName" value="조이가 JoY" placeholder="파일명을 입력하세요">
 <button type="button" class="secondary" id="saveAsFallback">다른 이름으로 저장</button>
+<div class="history-actions"><button type="button" class="secondary" id="undo" disabled>↶ 실행 취소</button><button type="button" class="secondary" id="redo" disabled>↷ 다시 실행</button></div>
 <button type="button" class="secondary" id="toggle">조절점 숨기기</button>
 <p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
 <p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p>
 </section>
-<section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad" style="font-family:DobongOldRoad,sans-serif">도봉옛길체</option><option value="NanumMyeongjo" style="font-family:NanumMyeongjo,sans-serif;font-weight:700">나눔명조</option><option value="BlackHanSans" style="font-family:BlackHanSans,sans-serif">검은고딕</option><option value="NotoSansKR" style="font-family:NotoSansKR,sans-serif;font-weight:500">본고딕</option><option value="AddedFont1" style="font-family:AddedFont1,sans-serif">あいはらかんてい</option><option value="AddedFont2" style="font-family:AddedFont2,sans-serif">おつとめ</option><option value="AddedFont3" style="font-family:AddedFont3,sans-serif">しょかきうたげ</option></select>
+<section><h2 class="section-title">3. 글씨<span class="help-tip" tabindex="0" role="button" aria-label="3. 글씨 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">글꼴과 굵기, 최대 글자 크기, 글자 색상, 정렬, 줄 간격, 자간, 문단 간격, 가로·세로 비율을 조절합니다. 크기는 표지판 영역에 맞도록 자동으로 줄어들 수 있습니다. 개인 폰트 파일은 현재 페이지에서만 사용할 수 있으며, 새로고침 후에는 다시 선택해야 합니다.</span></span></h2><label>글씨체</label><select id="font"><option value="DobongOldRoad" style="font-family:DobongOldRoad,sans-serif">도봉옛길체</option><option value="NanumMyeongjo" style="font-family:NanumMyeongjo,sans-serif;font-weight:700">나눔명조</option><option value="BlackHanSans" style="font-family:BlackHanSans,sans-serif">검은고딕</option><option value="NotoSansKR" style="font-family:NotoSansKR,sans-serif;font-weight:500">본고딕</option><option value="AddedFont1" style="font-family:AddedFont1,sans-serif">あいはらかんてい</option><option value="AddedFont2" style="font-family:AddedFont2,sans-serif">おつとめ</option><option value="AddedFont3" style="font-family:AddedFont3,sans-serif">しょかきうたげ</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가</label><p class="font-file-hint">(.ttf / .otf / .woff / .woff2)</p><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
 <div><label for="fontSize">최대 글자 크기</label><div class="range-control"><input id="fontSize" type="range" min="24" max="600" step="1" value="170"><input id="fontSizeNumber" type="number" min="24" max="600" step="1" value="170" aria-label="최대 글자 크기 숫자 입력"></div><p class="range-hint">24~600</p></div>
@@ -68,16 +78,18 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <p class="hint">자간은 글자 사이 간격, 문단 간격은 줄바꿈 사이 추가 간격입니다. 세로·가로 비율은 모든 글자에 동일하게 적용됩니다. 조절값에 따라 표지판 안에 들어오도록 글자 크기도 자동 조정됩니다.</p>
 
 </section>
-<section><h2>4. 배경 이미지</h2>
+<section><h2 class="section-title">4. 배경 이미지<span class="help-tip" tabindex="0" role="button" aria-label="4. 배경 이미지 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">이미지 파일을 선택하면 자르기 창이 열립니다. 드래그로 위치를 조정하고 확대/축소한 뒤 적용하세요. 업로드한 배경 이미지 파일 자체는 브라우저에 자동 저장하지 않으므로 페이지를 새로 열면 기본 배경으로 돌아갑니다.</span></span></h2>
 <label for="baseFile">배경 이미지 파일 추가</label><input type="file" id="baseFile" accept="image/*">
 <p class="hint">● 1x1 비율의 이미지를 사용할 것을 추천합니다.</p>
 </section>
-<section><h2>5. 표지판 영역 설정</h2>
+<section><h2 class="section-title">5. 표지판 영역 설정<span class="help-tip" tabindex="0" role="button" aria-label="5. 표지판 영역 설정 도움말" aria-expanded="false">?<span class="help-bubble" role="tooltip">네 모서리의 X/Y 좌표를 숫자로 입력하거나 미리보기의 파란 점을 드래그해 표지판 영역을 맞춥니다. ‘기본 위치로 초기화’는 네 모서리만 기본값으로 되돌립니다. 아래 ‘전체 설정 초기화’는 문장·글씨·색상·모서리 등 편집 설정을 기본값으로 되돌리고, 업로드한 배경 이미지도 기본 배경으로 바꿉니다.</span></span></h2>
 
 <div class="point-list" id="points"></div>
 <button class="secondary" id="reset">기본 위치로 초기화</button>
 <div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
 </section>
+<button type="button" id="resetAll">전체 설정 초기화</button>
+<p class="hint">문장·글씨·색상·모서리 설정을 기본값으로 되돌립니다. 업로드한 배경 이미지도 기본 이미지로 돌아갑니다.</p>
 </aside></main>
 <div class="crop-overlay" id="cropOverlay" role="dialog" aria-modal="true" aria-labelledby="cropTitle"><div class="crop-dialog"><h2 id="cropTitle">배경 이미지 자르기</h2><p class="hint">정사각형 영역을 드래그해 원하는 부분을 선택하세요.</p><div class="crop-stage" id="cropStage"><canvas id="cropCanvas" width="420" height="420"></canvas></div><label for="cropZoom">확대/축소</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"><div class="crop-actions"><button type="button" class="secondary" id="cropCancel">취소</button><button type="button" id="cropApply">자른 이미지 적용</button></div></div></div>
 <script>
@@ -85,13 +97,14 @@ const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=108
 let base=new Image();base.src='assets/sign-base.png';
 const initial=[{x:112,y:292},{x:815,y:37},{x:1012,y:518},{x:333,y:780}];
 const STORE='perspective-sign-corners-v2';
+const SETTINGS_STORE='perspective-sign-settings-v1';
 let pts;try{const v=JSON.parse(localStorage.getItem(STORE));pts=Array.isArray(v)&&v.length===4?v:initial.map(p=>({...p}))}catch{pts=initial.map(p=>({...p}))}
 let showPoints=true,drag=-1;
 const $=id=>document.getElementById(id),names=['왼쪽 위','오른쪽 위','오른쪽 아래','왼쪽 아래'];
 const pointBox=$('points');
 initial.forEach((p,i)=>{const el=document.createElement('div');el.className='point';el.innerHTML=`<b>${names[i]}</b><div class="grid"><input type="number" min="0" max="1080" aria-label="x"><input type="number" min="0" max="1080" aria-label="y"></div>`;pointBox.appendChild(el);const ins=el.querySelectorAll('input');ins[0].addEventListener('input',()=>{pts[i].x=clamp(+ins[0].value,0,W);savePoints();draw()});ins[1].addEventListener('input',()=>{pts[i].y=clamp(+ins[1].value,0,H);savePoints();draw()})});
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function savePoints(){try{localStorage.setItem(STORE,JSON.stringify(pts));$('saved').textContent='● 모서리 설정 저장 완료'}catch{$('saved').textContent='저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.'}}
+function savePoints(){try{localStorage.setItem(STORE,JSON.stringify(pts));$('saved').textContent='● 모서리 설정 저장 완료';scheduleHistory()}catch{$('saved').textContent='저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.'}}
 function syncInputs(){[...pointBox.querySelectorAll('.point')].forEach((el,i)=>{let ins=el.querySelectorAll('input');ins[0].value=Math.round(pts[i].x);ins[1].value=Math.round(pts[i].y)})}
 function solve(A,b){A=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<8;i++){let m=i;for(let j=i+1;j<8;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];let d=A[i][i]||1e-12;for(let k=i;k<9;k++)A[i][k]/=d;for(let j=0;j<8;j++)if(j!==i){let f=A[j][i];for(let k=i;k<9;k++)A[j][k]-=f*A[i][k]}}return A.map(r=>r[8])}
 function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let{x,y}=src[i],{x:u,y:v}=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}return solve(A,b)}
@@ -100,6 +113,47 @@ function project(h,x,y){let d=h[6]*x+h[7]*y+1;return{x:(h[0]*x+h[1]*y+h[2])/d,y:
 function bilinear(u,v){let [a,b,c,d]=pts;return{x:(1-u)*(1-v)*a.x+u*(1-v)*b.x+u*v*c.x+(1-u)*v*d.x,y:(1-u)*(1-v)*a.y+u*(1-v)*b.y+u*v*c.y+(1-u)*v*d.y}}
 const colorOverrides=new Map();
 let selectedRange={start:0,end:0};
+const settingIds=['words','fileName','font','fontWeight','fontSize','fontSizeNumber','color','selectedColor','align','leading','leadingNumber','tracking','paragraphSpacing','verticalScale','horizontalScale'];
+let history=[],historyIndex=-1,historyTimer=null,restoringState=false;
+function captureState(){
+ const values={};settingIds.forEach(id=>{const el=$(id);if(el)values[id]=el.value});
+ return {values,pts:pts.map(p=>({x:p.x,y:p.y})),showPoints,colorOverrides:[...colorOverrides.entries()]};
+}
+function stateKey(s){return JSON.stringify(s)}
+function updateHistoryButtons(){
+ $('undo').disabled=historyIndex<=0;$('redo').disabled=historyIndex<0||historyIndex>=history.length-1;
+}
+function saveSettings(){
+ try{
+  const s=captureState();
+  localStorage.setItem(SETTINGS_STORE,JSON.stringify(s));
+  localStorage.setItem(STORE,JSON.stringify(pts));
+  $('saved').textContent='● 편집 설정이 이 브라우저에 자동 저장됩니다.';
+ }catch{$('saved').textContent='자동 저장에 실패했습니다. 브라우저 저장 공간을 확인해 주세요.'}
+}
+function applyState(s,{persist=true}={}){
+ if(!s)return;
+ restoringState=true;
+ settingIds.forEach(id=>{const el=$(id);if(el&&s.values&&Object.prototype.hasOwnProperty.call(s.values,id))el.value=s.values[id]});
+ if(Array.isArray(s.pts)&&s.pts.length===4)pts=s.pts.map(p=>({x:clamp(Number(p.x)||0,0,W),y:clamp(Number(p.y)||0,0,H)}));
+ showPoints=!!s.showPoints;
+ colorOverrides.clear();(s.colorOverrides||[]).forEach(([k,v])=>colorOverrides.set(Number(k),v));
+ if($('fontWeight'))updateFontWeights();
+ $('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';
+ restoringState=false;draw();if(persist)saveSettings();
+}
+function pushHistory(){
+ if(restoringState)return;
+ const s=captureState(),key=stateKey(s);
+ if(historyIndex>=0&&stateKey(history[historyIndex])===key)return;
+ history=history.slice(0,historyIndex+1);history.push(s);
+ if(history.length>100)history.shift();
+ historyIndex=history.length-1;updateHistoryButtons();saveSettings();
+}
+function scheduleHistory(){if(restoringState)return;clearTimeout(historyTimer);historyTimer=setTimeout(pushHistory,350)}
+function undo(){if(historyIndex<=0)return;historyIndex--;applyState(history[historyIndex]);updateHistoryButtons()}
+function redo(){if(historyIndex>=history.length-1)return;historyIndex++;applyState(history[historyIndex]);updateHistoryButtons()}
+$('undo').addEventListener('click',undo);$('redo').addEventListener('click',redo);
 const wordsInput=$('words');
 function rememberSelection(){
  selectedRange={start:wordsInput.selectionStart??0,end:wordsInput.selectionEnd??0};
@@ -112,13 +166,13 @@ $('applyColor').onclick=()=>{
  if(selectedRange.start===selectedRange.end){$('folderStatus').textContent='먼저 색을 바꿀 글자를 문장 입력창에서 선택하세요.';return}
  const color=$('selectedColor').value;
  for(let i=selectedRange.start;i<selectedRange.end;i++)colorOverrides.set(i,color);
- draw();
+ draw();pushHistory();
 };
 $('clearColor').onclick=()=>{
  rememberSelection();
  if(selectedRange.start===selectedRange.end){$('folderStatus').textContent='먼저 색상을 초기화할 글자를 선택하세요.';return}
  for(let i=selectedRange.start;i<selectedRange.end;i++)colorOverrides.delete(i);
- draw();
+ draw();pushHistory();
 };
 const fontWeight=$('fontWeight');
 const fontWeightOptions={
@@ -139,8 +193,8 @@ function updateFontWeights(){
  $('font').style.setProperty('--selected-font', family);
  const selectedOption=$('font').selectedOptions[0]; if(selectedOption){selectedOption.style.fontFamily=family+',sans-serif'; selectedOption.style.fontWeight=family==='NanumMyeongjo'?'700':family==='NotoSansKR'?'500':'400';}
 }
-$('font').addEventListener('change',()=>{updateFontWeights();draw()});
-fontWeight.addEventListener('input',draw);
+$('font').addEventListener('change',()=>{updateFontWeights();draw();pushHistory()});
+fontWeight.addEventListener('input',()=>{draw();scheduleHistory()});fontWeight.addEventListener('change',pushHistory);
 updateFontWeights();
 function pairRange(rangeId,numberId){
  const range=$(rangeId),number=$(numberId);
@@ -284,7 +338,11 @@ function warpText(){
 }
 function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.drawImage(base,0,0,W,H);warpText();if(showPoints){pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,6.5,0,Math.PI*2);ctx.fillStyle='#4d79ff';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='white';ctx.stroke();ctx.fillStyle='white';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,p.x,p.y)})}syncInputs()}
 base.onload=draw;
-['words','font','fontSize','color','align','leading','tracking','paragraphSpacing','verticalScale','horizontalScale'].forEach(id=>$(id).addEventListener('input',draw));
+['words','font','fontSize','fontSizeNumber','color','selectedColor','align','leading','leadingNumber','tracking','paragraphSpacing','verticalScale','horizontalScale','fileName'].forEach(id=>{
+ const el=$(id);if(!el)return;
+ el.addEventListener('input',()=>{draw();scheduleHistory()});
+ el.addEventListener('change',()=>{draw();pushHistory()});
+});
 $('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
 const cropOverlay=$('cropOverlay'),cropCanvas=$('cropCanvas'),cropCtx=cropCanvas.getContext('2d'),cropZoom=$('cropZoom');
 let cropImage=null,cropURL=null,cropScale=1,cropOffsetX=0,cropOffsetY=0,cropDrag=null;
@@ -308,13 +366,44 @@ cropCanvas.addEventListener('pointerdown',e=>{if(!cropImage)return;const r=cropC
 cropCanvas.addEventListener('pointermove',e=>{if(!cropDrag)return;cropOffsetX=cropDrag.ox+(e.clientX-cropDrag.x)*cropDrag.rx;cropOffsetY=cropDrag.oy+(e.clientY-cropDrag.y)*cropDrag.ry;drawCrop()});
 function stopCropDrag(){cropDrag=null}cropCanvas.addEventListener('pointerup',stopCropDrag);cropCanvas.addEventListener('pointercancel',stopCropDrag);
 $('cropCancel').onclick=()=>{cropOverlay.classList.remove('open');$('baseFile').value='';if(cropURL){URL.revokeObjectURL(cropURL);cropURL=null}cropImage=null};
-$('cropApply').onclick=()=>{if(!cropImage)return;const g=cropGeometry(),out=document.createElement('canvas');out.width=1080;out.height=1080;const o=out.getContext('2d');o.drawImage(cropImage,(0-g.x)/g.scale,(0-g.y)/g.scale,420/g.scale,420/g.scale,0,0,1080,1080);const next=new Image();next.onload=()=>{const old=base;base=next;draw();if(old.src&&old.src.startsWith('blob:'))URL.revokeObjectURL(old.src);$('folderStatus').textContent='자른 배경 이미지가 적용되었습니다. 저장 크기는 1080 × 1080입니다.';cropOverlay.classList.remove('open');if(cropURL)URL.revokeObjectURL(cropURL);cropURL=null;cropImage=null};next.src=out.toDataURL('image/png')};
+$('cropApply').onclick=()=>{if(!cropImage)return;const g=cropGeometry(),out=document.createElement('canvas');out.width=1080;out.height=1080;const o=out.getContext('2d');o.drawImage(cropImage,(0-g.x)/g.scale,(0-g.y)/g.scale,420/g.scale,420/g.scale,0,0,1080,1080);const next=new Image();next.onload=()=>{const old=base;base=next;draw();if(old.src&&old.src.startsWith('blob:'))URL.revokeObjectURL(old.src);$('folderStatus').textContent='자른 배경 이미지가 적용되었습니다. 저장 크기는 1080 × 1080입니다.';cropOverlay.classList.remove('open');if(cropURL)URL.revokeObjectURL(cropURL);cropURL=null;cropImage=null;saveSettings()};next.src=out.toDataURL('image/png')};
 cropOverlay.addEventListener('click',e=>{if(e.target===cropOverlay)$('cropCancel').click()});
 function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEach((q,i)=>{let d=Math.hypot(q.x-p.x,q.y-p.y);if(d<best){best=d;drag=i}});if(drag>=0)canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
-$('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw()};
-$('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw()};
+$('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw();pushHistory()};
+$('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw();pushHistory()};
+$('resetAll').onclick=()=>{
+ if(!confirm('문장, 글씨, 색상, 모서리 등 모든 편집 설정을 기본값으로 초기화할까요? 업로드한 배경 이미지도 기본 배경으로 바뀝니다.'))return;
+ const defaults={words:'JoY가 조이',fileName:'조이가 JoY',font:'DobongOldRoad',fontSize:'170',fontSizeNumber:'170',color:'#202020',selectedColor:'#d62828',align:'center',leading:'1.15',leadingNumber:'1.15',tracking:'0',paragraphSpacing:'0',verticalScale:'100',horizontalScale:'100'};
+ restoringState=true;
+ Object.entries(defaults).forEach(([id,value])=>{if($(id))$(id).value=value});
+ pts=initial.map(p=>({...p}));showPoints=true;colorOverrides.clear();
+ $('fontFile').value='';$('baseFile').value='';
+ const oldBase=base;const nextBase=new Image();nextBase.onload=()=>{base=nextBase;if(oldBase.src&&oldBase.src.startsWith('blob:'))URL.revokeObjectURL(oldBase.src);draw()};
+ nextBase.src='assets/sign-base.png';
+ if(cropURL){URL.revokeObjectURL(cropURL);cropURL=null}cropImage=null;cropOverlay.classList.remove('open');
+ updateFontWeights();$('toggle').textContent='조절점 숨기기';restoringState=false;draw();
+ pushHistory();$('folderStatus').textContent='전체 설정을 기본값으로 초기화했습니다.';
+};
+document.querySelectorAll('.help-tip').forEach(tip=>{
+ let pressTimer=null,hideTimer=null;
+ const show=()=>{tip.classList.add('is-held');tip.setAttribute('aria-expanded','true')};
+ const hide=()=>{tip.classList.remove('is-held');tip.setAttribute('aria-expanded','false')};
+ tip.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'){pressTimer=setTimeout(show,450)}});
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>tip.addEventListener(ev,()=>{clearTimeout(pressTimer);if(tip.classList.contains('is-held')){hideTimer=setTimeout(hide,2200)}}));
+ tip.addEventListener('keydown',e=>{if(e.key==='Escape')hide();if((e.key==='Enter'||e.key===' ')&&matchMedia('(hover: none)').matches){e.preventDefault();tip.classList.toggle('is-held');tip.setAttribute('aria-expanded',tip.classList.contains('is-held')?'true':'false')}});
+});
+try{
+ const saved=JSON.parse(localStorage.getItem(SETTINGS_STORE));
+ if(saved&&saved.values){
+  settingIds.forEach(id=>{if($(id)&&Object.prototype.hasOwnProperty.call(saved.values,id))$(id).value=saved.values[id]});
+  if(Array.isArray(saved.pts)&&saved.pts.length===4)pts=saved.pts.map(p=>({x:clamp(Number(p.x)||0,0,W),y:clamp(Number(p.y)||0,0,H)}));
+  showPoints=!!saved.showPoints;(saved.colorOverrides||[]).forEach(([k,v])=>colorOverrides.set(Number(k),v));
+  updateFontWeights();$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';
+ }
+}catch{}
+pushHistory();
 $('saveAsFallback').onclick=async()=>{
  const rawName=$('fileName').value.trim();
  const safeName=rawName.replace(/[\\/:*?"<>|]/g,'_').replace(/\.png$/i,'');
