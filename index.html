@@ -37,6 +37,13 @@ button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
 <div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="220" value="125"></div><div><label>글자색</label><input id="color" type="color" value="#202020"></div></div>
 <label>정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select>
 <label>줄 간격</label><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15">
+<div class="grid">
+ <div><label for="tracking">자간 (px)</label><input id="tracking" type="number" min="-30" max="100" step="1" value="0"></div>
+ <div><label for="paragraphSpacing">문단 간격 (px)</label><input id="paragraphSpacing" type="number" min="0" max="150" step="1" value="0"></div>
+ <div><label for="verticalScale">세로 비율 (%)</label><input id="verticalScale" type="number" min="25" max="250" step="1" value="100"></div>
+ <div><label for="horizontalScale">가로 비율 (%)</label><input id="horizontalScale" type="number" min="25" max="250" step="1" value="100"></div>
+</div>
+<p class="hint">자간은 글자 사이 간격, 문단 간격은 줄바꿈 사이 추가 간격입니다. 세로·가로 비율은 모든 글자에 동일하게 적용됩니다. 조절값에 따라 표지판 안에 들어오도록 글자 크기도 자동 조정됩니다.</p>
 <p class="hint">글씨는 표지판 전체를 억지로 채우지 않습니다. 문장이 짧으면 최대 크기를 유지하고, 길어지면 표지판 안에 들어오도록 자동으로 작아집니다.</p>
 </section>
 <section><h2>2. 표지판 영역 설정</h2>
@@ -45,8 +52,11 @@ button.secondary{background:#303746;color:#f3f5fa;margin-top:8px}
 <button class="secondary" id="reset">기본 위치로 초기화</button>
 <div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
 </section>
-<section><h2>3. 저장</h2><div class="actions"><button id="download">PNG 다운로드</button><button class="secondary" id="toggle">조절점 숨기기</button></div>
-<p class="hint">다운로드는 원본 크기 1080 × 1080 PNG입니다. 조절점은 저장 이미지에 포함되지 않습니다.</p></section>
+<section><h2>3. 저장</h2>
+<label>파일명</label><input type="text" id="fileName" value="perspective-text" placeholder="파일명을 입력하세요">
+<div class="actions" style="margin-top:10px"><button id="download">다른 이름으로 저장</button><button class="secondary" id="toggle">조절점 숨기기</button></div>
+<p class="hint" id="folderStatus">파일명을 입력한 뒤 저장을 누르면 윈도우 저장 창에서 드라이브와 폴더를 선택할 수 있습니다.</p>
+<p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p></section>
 </aside></main>
 <script>
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=1080,H=1080;
@@ -65,10 +75,58 @@ function solve(A,b){A=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<8;i++){let m=i;for
 function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let{x,y}=src[i],{x:u,y:v}=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}return solve(A,b)}
 function project(h,x,y){let d=h[6]*x+h[7]*y+1;return{x:(h[0]*x+h[1]*y+h[2])/d,y:(h[3]*x+h[4]*y+h[5])/d}}
 function affine(s,d){let[p0,p1,p2]=s,[q0,q1,q2]=d,den=p0.x*(p1.y-p2.y)+p1.x*(p2.y-p0.y)+p2.x*(p0.y-p1.y);if(Math.abs(den)<1e-8)return null;let a=(q0.x*(p1.y-p2.y)+q1.x*(p2.y-p0.y)+q2.x*(p0.y-p1.y))/den,c=(q0.x*(p2.x-p1.x)+q1.x*(p0.x-p2.x)+q2.x*(p1.x-p0.x))/den,e=(q0.x*(p1.x*p2.y-p2.x*p1.y)+q1.x*(p2.x*p0.y-p0.x*p2.y)+q2.x*(p0.x*p1.y-p1.x*p0.y))/den,b=(q0.y*(p1.y-p2.y)+q1.y*(p2.y-p0.y)+q2.y*(p0.y-p1.y))/den,dv=(q0.y*(p2.x-p1.x)+q1.y*(p0.x-p2.x)+q2.y*(p1.x-p0.x))/den,f=(q0.y*(p1.x*p2.y-p2.x*p1.y)+q1.y*(p2.x*p0.y-p0.x*p2.y)+q2.y*(p0.x*p1.y-p1.x*p0.y))/den;return[a,b,c,dv,e,f]}
-function triangle(source,s,d){let m=affine(s,d);if(!m)return;ctx.save();ctx.beginPath();ctx.moveTo(d[0].x,d[0].y);ctx.lineTo(d[1].x,d[1].y);ctx.lineTo(d[2].x,d[2].y);ctx.closePath();ctx.clip();ctx.transform(...m);ctx.drawImage(source,0,0);ctx.restore()}
+function triangle(source,s,d){
+let m=affine(s,d);if(!m)return;
+// Antialiased clipping on each mesh triangle can leave hairline gaps.
+// Expand only the clip edge slightly so adjacent triangles overlap.
+const cx=(d[0].x+d[1].x+d[2].x)/3,cy=(d[0].y+d[1].y+d[2].y)/3,overlap=1.15;
+const clipPts=d.map(p=>{let dx=p.x-cx,dy=p.y-cy,len=Math.hypot(dx,dy)||1;return{x:p.x+dx/len*overlap,y:p.y+dy/len*overlap}});
+ctx.save();ctx.beginPath();ctx.moveTo(clipPts[0].x,clipPts[0].y);ctx.lineTo(clipPts[1].x,clipPts[1].y);ctx.lineTo(clipPts[2].x,clipPts[2].y);ctx.closePath();ctx.clip();ctx.transform(...m);ctx.drawImage(source,0,0);ctx.restore()
+}
 function bilinear(u,v){let [a,b,c,d]=pts;return{x:(1-u)*(1-v)*a.x+u*(1-v)*b.x+u*v*c.x+(1-u)*v*d.x,y:(1-u)*(1-v)*a.y+u*(1-v)*b.y+u*v*c.y+(1-u)*v*d.y}}
-function makeText(){let lines=($('words').value||' ').split('\n'),font=$('font').value,leading=+$('leading').value,max=+$('fontSize').value;let m=document.createElement('canvas').getContext('2d');const measure=size=>{m.font=`700 ${size}px "${font}"`;return Math.max(1,...lines.map(t=>m.measureText(t||' ').width))};let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;let avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;let size=max;while(size>10&&(measure(size)>avgW*.78||lines.length*size*leading>avgH*.58))size-=1;
-let width=Math.ceil(measure(size)+size*.35),height=Math.ceil(lines.length*size*leading+size*.3),off=document.createElement('canvas');off.width=Math.max(1,width);off.height=Math.max(1,height);let o=off.getContext('2d');o.font=`700 ${size}px "${font}"`;o.fillStyle=$('color').value;o.textBaseline='middle';o.textAlign=$('align').value;let x=$('align').value==='left'?size*.18:$('align').value==='right'?width-size*.18:width/2;lines.forEach((line,i)=>o.fillText(line,x,size*.15+size*leading*(i+.5)));return off}
+function makeText(){
+ const lines=($('words').value||' ').split('\n');
+ const font=$('font').value,leading=+$('leading').value,max=+$('fontSize').value;
+ const tracking=+$('tracking').value||0,paragraphSpacing=+$('paragraphSpacing').value||0;
+ const sx=clamp((+$('horizontalScale').value||100)/100,.25,2.5);
+ const sy=clamp((+$('verticalScale').value||100)/100,.25,2.5);
+ const measureCtx=document.createElement('canvas').getContext('2d');
+ let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;
+ let avgH=(Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y)+Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y))/2;
+ const metrics=size=>{
+  measureCtx.font=`700 ${size}px "${font}"`;
+  const widths=lines.map(line=>{
+   const chars=Array.from(line);
+   if(!chars.length)return 0;
+   return chars.reduce((sum,ch)=>sum+measureCtx.measureText(ch).width*sx,0)+Math.max(0,chars.length-1)*tracking;
+  });
+  const lineStep=size*leading*sy+paragraphSpacing;
+  const totalHeight=size*sy+Math.max(0,lines.length-1)*lineStep;
+  return {width:Math.max(1,...widths),height:Math.max(size*sy,totalHeight),widths,lineStep};
+ };
+ let size=max,met=metrics(size);
+ while(size>10&&(met.width>avgW*.78||met.height>avgH*.58)){size-=1;met=metrics(size)}
+ const padX=Math.max(4,size*.2),padY=Math.max(4,size*.18);
+ const off=document.createElement('canvas');
+ off.width=Math.max(1,Math.ceil(met.width+padX*2));
+ off.height=Math.max(1,Math.ceil(met.height+padY*2));
+ const o=off.getContext('2d');
+ o.fillStyle=$('color').value;
+ o.textBaseline='alphabetic';
+ o.font=`700 ${size}px "${font}"`;
+ const align=$('align').value;
+ lines.forEach((line,lineIndex)=>{
+  const chars=Array.from(line),lineWidth=met.widths[lineIndex];
+  let cursor=align==='left'?padX:align==='right'?off.width-padX-lineWidth:(off.width-lineWidth)/2;
+  const baseline=padY+size*.82*sy+lineIndex*met.lineStep;
+  chars.forEach((ch,charIndex)=>{
+   const rawWidth=o.measureText(ch).width;
+   o.save();o.translate(cursor,baseline);o.scale(sx,sy);o.fillText(ch,0,0);o.restore();
+   cursor+=rawWidth*sx+(charIndex<chars.length-1?tracking:0);
+  });
+ });
+ return off;
+}
 function warpText(){
 let off=makeText();
 let avgW=(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)+Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y))/2;
@@ -89,13 +147,43 @@ for(let j=0;j<n;j++)for(let i=0;i<n;i++){
 }
 function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.drawImage(base,0,0,W,H);warpText();if(showPoints){pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,6.5,0,Math.PI*2);ctx.fillStyle='#4d79ff';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='white';ctx.stroke();ctx.fillStyle='white';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,p.x,p.y)})}syncInputs()}
 base.onload=draw;
-['words','font','fontSize','color','align','leading'].forEach(id=>$(id).addEventListener('input',draw));
+['words','font','fontSize','color','align','leading','tracking','paragraphSpacing','verticalScale','horizontalScale'].forEach(id=>$(id).addEventListener('input',draw));
 $('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
 function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEach((q,i)=>{let d=Math.hypot(q.x-p.x,q.y-p.y);if(d<best){best=d;drag=i}});if(drag>=0)canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
 $('reset').onclick=()=>{pts=initial.map(p=>({...p}));savePoints();draw()};
 $('toggle').onclick=()=>{showPoints=!showPoints;$('toggle').textContent=showPoints?'조절점 숨기기':'조절점 보이기';draw()};
-$('download').onclick=()=>{let old=showPoints;showPoints=false;draw();let a=document.createElement('a');a.download='perspective-text.png';a.href=canvas.toDataURL('image/png');a.click();showPoints=old;draw()};
+$('download').onclick=async()=>{
+ const rawName=$('fileName').value.trim();
+ const safeName=rawName.replace(/[\\/:*?"<>|]/g,'_').replace(/\.png$/i,'');
+ if(!safeName){$('folderStatus').textContent='먼저 파일명을 입력하세요.';return}
+ let old=showPoints;
+ try{
+  showPoints=false;draw();
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  showPoints=old;draw();
+  if(!blob)throw new Error('PNG 이미지 생성에 실패했습니다.');
+  if(window.showSaveFilePicker){
+   const handle=await window.showSaveFilePicker({
+    suggestedName:safeName+'.png',
+    types:[{description:'PNG 이미지',accept:{'image/png':['.png']}}]
+   });
+   const writable=await handle.createWritable();
+   await writable.write(blob);await writable.close();
+   $('folderStatus').textContent='저장 완료: '+handle.name;
+  }else{
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download=safeName+'.png';document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   $('folderStatus').textContent='이 브라우저는 저장 위치 선택 기능을 지원하지 않아 기본 다운로드를 실행했습니다. 브라우저 다운로드 설정에서 위치를 선택해 주세요.';
+  }
+ }catch(e){
+  showPoints=old;draw();
+  if(e.name==='AbortError'){$('folderStatus').textContent='저장이 취소되었습니다.';return}
+  $('folderStatus').textContent='저장 실패: '+e.message;
+ }
+};
 if(base.complete&&base.naturalWidth)draw();
+restoreDirectory();
 </script></body></html>
