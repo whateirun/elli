@@ -25,7 +25,7 @@ section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--lin
 h2{font-size:14px;margin:0 0 10px}label{display:block;color:#29271f;margin:9px 0 5px}
 input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:9px}
 textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:3px}
-input[type=range]{width:100%;accent-color:var(--accent)}input[type=file]{width:100%;font-size:12px;color:#39362c}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}.range-control{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:8px;align-items:center}.range-control input[type=number]{padding:6px 5px;text-align:center;min-width:0}.range-hint{grid-column:1/-1;color:var(--muted);font-size:11px;margin-top:-5px}input[type=file]{width:100%;font-size:12px;color:#39362c}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
 button{border:1px solid #ebcf70;border-radius:9px;padding:11px 14px;background:#ffed8b;color:#171717;font-weight:700;cursor:pointer;width:100%}
 button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
@@ -33,6 +33,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 .point input{padding:6px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .status{font-size:12px;color:#66500d;margin-top:8px}
 @media(max-width:850px){main{grid-template-columns:1fr;padding:36px 10px 10px}.preview{min-height:0;position:static;align-self:auto}.site-logo{width:100%}}
+.crop-overlay{position:fixed;inset:0;background:#17171799;display:none;align-items:center;justify-content:center;padding:16px;z-index:1000}.crop-overlay.open{display:flex}.crop-dialog{width:min(100%,520px);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 18px 55px #0004}.crop-dialog h2{margin:0 0 6px}.crop-stage{width:min(100%,420px);aspect-ratio:1;margin:14px auto;background:#f1f4f1;border:1px solid var(--line);border-radius:8px;overflow:hidden;touch-action:none}.crop-stage canvas{width:100%;height:100%;touch-action:none}.crop-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.crop-actions button{margin:0}.crop-dialog .hint{margin-top:8px}
 </style></head>
 <body>
 <header><img class="site-logo" src="assets/site-logo.png" alt="사이트 로고"></header>
@@ -49,7 +50,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
 <p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p>
 </section>
-<section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1">Aiharakantei JP</option><option value="AddedFont2">Otsutome JP</option><option value="AddedFont3">Shokakiutage JP</option></select>
+<section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1" style="font-family:AddedFont1,sans-serif">あいはらかんてい</option><option value="AddedFont2" style="font-family:AddedFont2,sans-serif">おつとめ</option><option value="AddedFont3" style="font-family:AddedFont3,sans-serif">しょかきうたげ</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가</label><p class="hint">(.ttf / .otf / .woff / .woff2)</p><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
 <div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="180"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
@@ -58,7 +59,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <button type="button" class="secondary" id="clearColor">선택 글자 색상 초기화</button>
 <p class="hint">위 문장 입력창에서 색을 바꿀 글자를 드래그해 선택한 다음 색상을 적용하세요. 여러 글자를 각각 선택해 다른 색을 지정할 수 있습니다.</p>
 <label>정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select>
-<label>줄 간격</label><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15">
+<label for="leading">줄 간격</label><div class="range-control"><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15"><input id="leadingNumber" type="number" min="0.85" max="1.6" step="0.05" value="1.15" aria-label="줄 간격 숫자 입력"></div><p class="range-hint">0.85~1.6</p>
 <div class="grid">
  <div><label for="tracking">자간 (px)</label><input id="tracking" type="number" min="-30" max="100" step="1" value="0"></div>
  <div><label for="paragraphSpacing">문단 간격 (px)</label><input id="paragraphSpacing" type="number" min="0" max="150" step="1" value="0"></div>
@@ -79,6 +80,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
 </section>
 </aside></main>
+<div class="crop-overlay" id="cropOverlay" role="dialog" aria-modal="true" aria-labelledby="cropTitle"><div class="crop-dialog"><h2 id="cropTitle">배경 이미지 자르기</h2><p class="hint">정사각형 영역을 드래그해 원하는 부분을 선택하세요.</p><div class="crop-stage" id="cropStage"><canvas id="cropCanvas" width="420" height="420"></canvas></div><label for="cropZoom">확대/축소</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"><div class="crop-actions"><button type="button" class="secondary" id="cropCancel">취소</button><button type="button" id="cropApply">자른 이미지 적용</button></div></div></div>
 <script>
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=1080,H=1080;
 let base=new Image();base.src='assets/sign-base.png';
@@ -139,6 +141,13 @@ function updateFontWeights(){
 $('font').addEventListener('change',()=>{updateFontWeights();draw()});
 fontWeight.addEventListener('input',draw);
 updateFontWeights();
+function pairRange(rangeId,numberId){
+ const range=$(rangeId),number=$(numberId);
+ const syncFromRange=()=>{number.value=range.value};
+ const syncFromNumber=()=>{let value=Number(number.value);if(number.value===''||!Number.isFinite(value))return;value=clamp(value,Number(range.min),Number(range.max));if(range.step!=='any'){const step=Number(range.step);value=Number(range.min)+Math.round((value-Number(range.min))/step)*step;value=clamp(value,Number(range.min),Number(range.max))}range.value=String(value);number.value=String(value);draw()};
+ range.addEventListener('input',syncFromRange);number.addEventListener('input',syncFromNumber);number.addEventListener('change',()=>{if(number.value==='')number.value=range.value;syncFromNumber()});
+}
+pairRange('fontSize','fontSizeNumber');pairRange('leading','leadingNumber');
 function makeText(){
  const lines=($('words').value||' ').split('\n');
  const font=$('font').value,weight=+$('fontWeight').value,leading=+$('leading').value,max=+$('fontSize').value;
@@ -255,14 +264,30 @@ function draw(){ctx.clearRect(0,0,W,H);if(base.complete&&base.naturalWidth)ctx.d
 base.onload=draw;
 ['words','font','fontSize','color','align','leading','tracking','paragraphSpacing','verticalScale','horizontalScale'].forEach(id=>$(id).addEventListener('input',draw));
 $('fontFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;let url=URL.createObjectURL(file),name='UserFont'+Date.now();let face=new FontFace(name,`url(${url})`);await face.load();document.fonts.add(face);let opt=document.createElement('option');opt.value=name;opt.textContent=file.name;opt.selected=true;$('font').appendChild(opt);draw()});
+const cropOverlay=$('cropOverlay'),cropCanvas=$('cropCanvas'),cropCtx=cropCanvas.getContext('2d'),cropStage=$('cropStage'),cropZoom=$('cropZoom');
+let cropImage=null,cropURL=null,cropScale=1,cropOffsetX=0,cropOffsetY=0,cropDrag=null;
+function cropGeometry(){
+ if(!cropImage)return null;
+ const side=420,fit=Math.max(side/cropImage.naturalWidth,side/cropImage.naturalHeight),scale=fit*cropScale;
+ const dw=cropImage.naturalWidth*scale,dh=cropImage.naturalHeight*scale;
+ cropOffsetX=clamp(cropOffsetX,side-dw,0);cropOffsetY=clamp(cropOffsetY,side-dh,0);
+ return {side,scale,dw,dh,x:cropOffsetX,y:cropOffsetY};
+}
+function drawCrop(){if(!cropImage)return;const g=cropGeometry();cropCtx.clearRect(0,0,420,420);cropCtx.fillStyle='#f1f4f1';cropCtx.fillRect(0,0,420,420);cropCtx.drawImage(cropImage,g.x,g.y,g.dw,g.dh)}
 $('baseFile').addEventListener('change',e=>{
- const file=e.target.files&&e.target.files[0]; if(!file)return;
- if(!file.type.startsWith('image/')){$('folderStatus').textContent='이미지 파일을 선택해 주세요.';return}
- const next=new Image(),url=URL.createObjectURL(file);
- next.onload=()=>{const old=base;base=next;draw();if(old.src&&old.src.startsWith('blob:'))URL.revokeObjectURL(old.src);$('folderStatus').textContent='배경 이미지가 적용되었습니다. 미리보기와 저장 파일은 1080 × 1080입니다.'};
- next.onerror=()=>{$('folderStatus').textContent='이미지를 불러오지 못했습니다.';URL.revokeObjectURL(url)};
- next.src=url;
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ if(!file.type.startsWith('image/')){$('folderStatus').textContent='이미지 파일을 선택해 주세요.';e.target.value='';return}
+ const url=URL.createObjectURL(file),img=new Image();
+ img.onload=()=>{if(cropURL)URL.revokeObjectURL(cropURL);cropURL=url;cropImage=img;cropScale=1;cropOffsetX=(420-Math.max(420,420*img.naturalWidth/img.naturalHeight))/2;cropOffsetY=(420-Math.max(420,420*img.naturalHeight/img.naturalWidth))/2;cropZoom.value='1';cropOverlay.classList.add('open');drawCrop()};
+ img.onerror=()=>{URL.revokeObjectURL(url);$('folderStatus').textContent='이미지를 불러오지 못했습니다.';e.target.value=''};img.src=url;
 });
+cropZoom.addEventListener('input',()=>{const old=cropScale;cropScale=Number(cropZoom.value);const ratio=cropScale/old;cropOffsetX=210-(210-cropOffsetX)*ratio;cropOffsetY=210-(210-cropOffsetY)*ratio;drawCrop()});
+cropCanvas.addEventListener('pointerdown',e=>{if(!cropImage)return;const r=cropCanvas.getBoundingClientRect();cropDrag={x:e.clientX,y:e.clientY,ox:cropOffsetX,oy:cropOffsetY,rx:420/r.width,ry:420/r.height};cropCanvas.setPointerCapture(e.pointerId)});
+cropCanvas.addEventListener('pointermove',e=>{if(!cropDrag)return;cropOffsetX=cropDrag.ox+(e.clientX-cropDrag.x)*cropDrag.rx;cropOffsetY=cropDrag.oy+(e.clientY-cropDrag.y)*cropDrag.ry;drawCrop()});
+function stopCropDrag(){cropDrag=null}cropCanvas.addEventListener('pointerup',stopCropDrag);cropCanvas.addEventListener('pointercancel',stopCropDrag);
+$('cropCancel').onclick=()=>{cropOverlay.classList.remove('open');$('baseFile').value='';if(cropURL){URL.revokeObjectURL(cropURL);cropURL=null}cropImage=null};
+$('cropApply').onclick=()=>{if(!cropImage)return;const g=cropGeometry(),out=document.createElement('canvas');out.width=1080;out.height=1080;const o=out.getContext('2d');o.drawImage(cropImage,(0-g.x)/g.scale,(0-g.y)/g.scale,420/g.scale,420/g.scale,0,0,1080,1080);const next=new Image();next.onload=()=>{const old=base;base=next;draw();if(old.src&&old.src.startsWith('blob:'))URL.revokeObjectURL(old.src);$('folderStatus').textContent='자른 배경 이미지가 적용되었습니다. 저장 크기는 1080 × 1080입니다.';cropOverlay.classList.remove('open');if(cropURL)URL.revokeObjectURL(cropURL);cropURL=null;cropImage=null};next.src=out.toDataURL('image/png')};
+cropOverlay.addEventListener('click',e=>{if(e.target===cropOverlay)$('cropCancel').click()});
 function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 canvas.addEventListener('pointerdown',e=>{let p=pos(e),best=24;drag=-1;pts.forEach((q,i)=>{let d=Math.hypot(q.x-p.x,q.y-p.y);if(d<best){best=d;drag=i}});if(drag>=0)canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(drag<0)return;let p=pos(e);pts[drag]={x:clamp(p.x,0,W),y:clamp(p.y,0,H)};savePoints();draw()});canvas.addEventListener('pointerup',()=>drag=-1);canvas.addEventListener('pointercancel',()=>drag=-1);
