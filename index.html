@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>표지판 원근 글씨 합성기</title>
+<title>엘리자베스가 되어 보자!</title>
 <style>
 @font-face{font-family:"DobongOldRoad";src:url("assets/dobong.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:"NanumMyeongjo";src:url("assets/fonts/NanumMyeongjo-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
@@ -18,7 +18,7 @@
 header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;background:var(--bg)}
 .site-logo{display:block;width:min(100%,1200px);height:auto;object-fit:contain}
 main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;padding:36px 18px 18px;max-width:1500px;margin:auto}
-.preview{background:#fffdf2;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:400px}
+.preview{background:#fffdf2;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:400px;position:sticky;top:12px;align-self:start}
 canvas{display:block;width:min(100%,900px);height:auto;touch-action:none}
 aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;height:max-content}
 section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--line)}section:last-child{border:0;margin:0;padding:0}
@@ -32,7 +32,7 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 .point-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.point{background:#fff8dc;border:1px solid #ebcf70;border-radius:8px;padding:8px}.point b{display:block;font-size:12px;margin-bottom:5px}
 .point input{padding:6px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .status{font-size:12px;color:#66500d;margin-top:8px}
-@media(max-width:850px){main{grid-template-columns:1fr;padding:36px 10px 10px}.preview{min-height:0}.site-logo{width:100%}}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:36px 10px 10px}.preview{min-height:0;position:static;align-self:auto}.site-logo{width:100%}}
 </style></head>
 <body>
 <header><img class="site-logo" src="assets/site-logo.png" alt="사이트 로고"></header>
@@ -41,7 +41,15 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <aside>
 <section><h2>1. 문장과 글씨</h2>
 <textarea id="words" placeholder="표지판에 넣을 문장을 입력하세요.">YOUR TEXT</textarea>
-<label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">Black Han Sans</option><option value="NotoSansKR">Noto Sans KR</option><option value="AddedFont1">Aiharakantei_200</option><option value="AddedFont2">Otsutome_font_ver3_20</option><option value="AddedFont3">しょかきうたげ_無料版_</option></select>
+</section>
+<section><h2>3. 저장</h2>
+<label>파일명</label><input type="text" id="fileName" value="perspective-text" placeholder="파일명을 입력하세요">
+<button type="button" class="secondary" id="saveAsFallback">다른 이름으로 저장</button>
+<button type="button" class="secondary" id="toggle">조절점 숨기기</button>
+<p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
+<p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p>
+</section>
+<section><label>글씨체</label><select id="font"><option value="DobongOldRoad">도봉옛길체</option><option value="NanumMyeongjo">나눔명조</option><option value="BlackHanSans">검은고딕</option><option value="NotoSansKR">본고딕</option><option value="AddedFont1">Aiharakantei JP</option><option value="AddedFont2">Otsutome JP</option><option value="AddedFont3">Shokakiutage JP</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가 (.ttf / .otf / .woff / .woff2)</label><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
 <div class="grid"><div><label>최대 글자 크기</label><input id="fontSize" type="range" min="24" max="600" value="125"></div><div><label>기본 글자색</label><input id="color" type="color" value="#202020"></div></div>
@@ -70,12 +78,6 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <button class="secondary" id="reset">기본 위치로 초기화</button>
 <div class="status" id="saved">● 모서리 설정이 이 브라우저에 저장됩니다.</div>
 </section>
-<section><h2>3. 저장</h2>
-<label>파일명</label><input type="text" id="fileName" value="perspective-text" placeholder="파일명을 입력하세요">
-<button type="button" class="secondary" id="saveAsFallback">다른 이름으로 저장</button>
-<button type="button" class="secondary" id="toggle">조절점 숨기기</button>
-<p class="hint" id="folderStatus">저장 위치는 브라우저의 파일 저장 창에서 선택할 수 있습니다.</p>
-<p class="hint">원본 크기 1080 × 1080 PNG로 저장되며 조절점은 제외됩니다.</p></section>
 </aside></main>
 <script>
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),W=1080,H=1080;
