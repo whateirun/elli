@@ -25,7 +25,7 @@ section{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--lin
 h2{font-size:14px;margin:0 0 10px}label{display:block;color:#29271f;margin:9px 0 5px}
 input,select,textarea,button{font:inherit;color:inherit}input[type=text],input[type=number],select,textarea{width:100%;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:9px}
 textarea{resize:vertical;min-height:74px}input[type=color]{width:100%;height:38px;background:#fffef8;border:1px solid #ebcf70;border-radius:8px;padding:3px}
-select#font{font-family:var(--selected-font,inherit)}input[type=range]{width:100%;accent-color:var(--accent);min-width:0}.range-control{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:8px;align-items:center}.range-control input[type=number]{padding:6px 5px;text-align:center;min-width:0}.range-hint{color:var(--muted);font-size:11px;margin:2px 0 0}input[type=file]{width:100%;font-size:12px;color:#39362c}
+select#font{font-family:var(--selected-font,inherit)}select#font option[value="BlackHanSans"]{font-family:"BlackHanSans",sans-serif;line-height:1.8;padding-top:4px;padding-bottom:4px}input[type=range]{width:100%;accent-color:var(--accent);min-width:0}.range-control{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:8px;align-items:center}.range-control input[type=number]{padding:6px 5px;text-align:center;min-width:0}.range-hint{color:var(--muted);font-size:11px;margin:2px 0 0}input[type=file]{width:100%;font-size:12px;color:#39362c}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hint{color:var(--muted);font-size:12px;margin:6px 0 0}.font-file-hint{margin:-5px 0 2px;font-size:12px;color:var(--muted)}.color-pickers{display:grid;grid-template-columns:1fr 1fr;gap:8px}.color-pickers label{margin:9px 0 5px}.color-pickers input[type=color]{display:block}.color-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}.color-actions button{margin:0}
 button{border:1px solid #ebcf70;border-radius:9px;padding:11px 14px;background:#ffed8b;color:#171717;font-weight:700;cursor:pointer;width:100%}
 button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
@@ -53,12 +53,12 @@ button.secondary{background:#fff5d5;color:#171717;margin-top:8px}
 <section><h2>3. 글씨</h2><label>글씨체</label><select id="font"><option value="DobongOldRoad" style="font-family:DobongOldRoad,sans-serif">도봉옛길체</option><option value="NanumMyeongjo" style="font-family:NanumMyeongjo,sans-serif;font-weight:700">나눔명조</option><option value="BlackHanSans" style="font-family:BlackHanSans,sans-serif">검은고딕</option><option value="NotoSansKR" style="font-family:NotoSansKR,sans-serif;font-weight:500">본고딕</option><option value="AddedFont1" style="font-family:AddedFont1,sans-serif">あいはらかんてい</option><option value="AddedFont2" style="font-family:AddedFont2,sans-serif">おつとめ</option><option value="AddedFont3" style="font-family:AddedFont3,sans-serif">しょかきうたげ</option></select>
 <label>글씨 굵기</label><select id="fontWeight"></select>
 <label>내 폰트 파일 추가</label><p class="font-file-hint">(.ttf / .otf / .woff / .woff2)</p><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">
-<div><label for="fontSize">최대 글자 크기</label><div class="range-control"><input id="fontSize" type="range" min="24" max="600" value="170"><input id="fontSizeNumber" type="number" min="24" max="600" step="1" value="170" aria-label="최대 글자 크기 숫자 입력"></div><p class="range-hint">24~600</p></div>
+<div><label for="fontSize">최대 글자 크기</label><div class="range-control"><input id="fontSize" type="range" min="24" max="600" step="1" value="170"><input id="fontSizeNumber" type="number" min="24" max="600" step="1" value="170" aria-label="최대 글자 크기 숫자 입력"></div><p class="range-hint">24~600</p></div>
 <div class="color-pickers"><div><label for="color">기본 글자 색상</label><input id="color" type="color" value="#202020"></div><div><label for="selectedColor">선택한 글자 색상</label><input id="selectedColor" type="color" value="#d62828"></div></div>
 <div class="color-actions"><button type="button" id="applyColor">선택 글자에 적용</button><button type="button" class="secondary" id="clearColor">선택 글자 색상 초기화</button></div>
 <p class="hint">위 문장 입력창에서 색을 바꿀 글자를 드래그해 선택한 다음 색상을 적용하세요. 여러 글자를 각각 선택해 다른 색을 지정할 수 있습니다.</p>
 <label>정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select>
-<label for="leading">줄 간격</label><div class="range-control"><input id="leading" type="range" min="0.85" max="1.6" step=".05" value="1.15"><input id="leadingNumber" type="number" min="0.85" max="1.6" step="0.05" value="1.15" aria-label="줄 간격 숫자 입력"></div><p class="range-hint">0.85~1.6</p>
+<label for="leading">줄 간격</label><div class="range-control"><input id="leading" type="range" min="0.85" max="1.6" step="0.05" value="1.15"><input id="leadingNumber" type="number" min="0.85" max="1.6" step="0.05" value="1.15" aria-label="줄 간격 숫자 입력"></div><p class="range-hint">0.85~1.6</p>
 <div class="grid">
  <div><label for="tracking">자간 (px)</label><input id="tracking" type="number" min="-30" max="100" step="1" value="0"></div>
  <div><label for="paragraphSpacing">문단 간격 (px)</label><input id="paragraphSpacing" type="number" min="0" max="150" step="1" value="0"></div>
@@ -144,9 +144,30 @@ fontWeight.addEventListener('input',draw);
 updateFontWeights();
 function pairRange(rangeId,numberId){
  const range=$(rangeId),number=$(numberId);
- const syncFromRange=()=>{number.value=range.value};
- const syncFromNumber=()=>{if(number.value==='')return;let value=Number(number.value);if(!Number.isFinite(value))return;value=clamp(value,Number(range.min),Number(range.max));if(range.step!=='any'){const step=Number(range.step);value=Number(range.min)+Math.round((value-Number(range.min))/step)*step;value=clamp(value,Number(range.min),Number(range.max))}range.value=String(value);number.value=String(value);draw()};
- range.addEventListener('input',syncFromRange);number.addEventListener('input',syncFromNumber);number.addEventListener('change',()=>{if(number.value==='')number.value=range.value;syncFromNumber()});
+ const syncFromRange=()=>{number.value=range.value;draw()};
+ const normalizeNumber=()=>{
+  if(number.value===''){number.value=range.value;return}
+  let value=Number(number.value);
+  if(!Number.isFinite(value))value=Number(range.value);
+  value=clamp(value,Number(range.min),Number(range.max));
+  if(range.step!=='any'){
+   const step=Number(range.step);
+   const precision=(String(step).split('.')[1]||'').length;
+   value=Number((Number(range.min)+Math.round((value-Number(range.min))/step)*step).toFixed(precision));
+   value=clamp(value,Number(range.min),Number(range.max));
+  }
+  range.value=String(value);number.value=String(value);draw();
+ };
+ const updateWhileTyping=()=>{
+  if(number.value==='' || number.value==='-' || number.value.endsWith('.'))return;
+  const value=Number(number.value);
+  if(!Number.isFinite(value) || value<Number(range.min) || value>Number(range.max))return;
+  range.value=String(value);draw();
+ };
+ range.addEventListener('input',syncFromRange);
+ number.addEventListener('input',updateWhileTyping);
+ number.addEventListener('change',normalizeNumber);
+ number.addEventListener('blur',normalizeNumber);
 }
 pairRange('fontSize','fontSizeNumber');pairRange('leading','leadingNumber');
 function makeText(){
